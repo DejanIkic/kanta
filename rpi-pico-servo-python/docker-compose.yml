@@ -1,0 +1,89 @@
+# Docker Compose za RPi Pico Servo Control sistem
+# Autor: AI Assistant
+
+version: '3.8'
+
+services:
+  # PostgreSQL baza podataka
+  postgres:
+    image: postgres:15-alpine
+    container_name: servo_postgres
+    environment:
+      POSTGRES_DB: servo_db
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password
+      POSTGRES_INITDB_ARGS: "--encoding=UTF8"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./scripts/init_db.sql:/docker-entrypoint-initdb.d/init_db.sql
+    ports:
+      - "5432:5432"
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - servo_network
+
+  # FastAPI aplikacija
+  api:
+    build:
+      context: .
+      dockerfile: rpi_api/Dockerfile
+    container_name: servo_api
+    environment:
+      - DATABASE_URL=postgresql://postgres:password@postgres:5432/servo_db
+      - SERIAL_PORT=/dev/ttyACM0
+      - SERIAL_BAUDRATE=115200
+      - LOG_LEVEL=INFO
+    ports:
+      - "8000:8000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: unless-stopped
+    devices:
+      - "/dev/ttyACM0:/dev/ttyACM0"  # USB konekcija za Pico
+    privileged: true  # Potrebno za pristup serijskom portu
+    volumes:
+      - ./logs:/app/logs
+    networks:
+      - servo_network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # pgAdmin za database management (opciono)
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    container_name: servo_pgadmin
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@example.com
+      PGADMIN_DEFAULT_PASSWORD: admin
+      PGADMIN_CONFIG_SERVER_MODE: 'False'
+    ports:
+      - "5050:80"
+    depends_on:
+      - postgres
+    restart: unless-stopped
+    volumes:
+      - pgadmin_data:/var/lib/pgadmin
+    networks:
+      - servo_network
+    profiles:
+      - admin  # Pokreće se samo sa --profile admin
+
+volumes:
+  postgres_data:
+    driver: local
+  pgadmin_data:
+    driver: local
+
+networks:
+  servo_network:
+    driver: bridge

@@ -1,0 +1,4 @@
+Servo žice    →    Pico pinovi
+Crvena (VCC)  →    VBUS (Pin 36, 3v3)
+Crna/smeđa    →    GND ( 38)
+Žuta/naranđa  →    GP0 (Pin 1) - SIGNAL
