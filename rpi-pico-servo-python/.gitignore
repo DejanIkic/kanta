@@ -90,7 +90,7 @@ alembic/versions/*.py
 !alembic/versions/__init__.py
 
 # MicroPython
-*.uf2
+
 *.hex
 *.bin
 
