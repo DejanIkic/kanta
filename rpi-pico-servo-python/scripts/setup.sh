@@ -36,8 +36,11 @@ sudo apt install -y \
     libpq-dev \
     portaudio19-dev \
     python3-serial \
-    rshell \
     minicom
+
+# Instaliraj rshell i mpremote via pip (nisu dostupni kao apt paketi)
+echo "Instalacija rshell i mpremote..."
+pip3 install --break-system-packages rshell mpremote
 
 # Dodaj korisnika u docker grupu
 echo "Dodavanje korisnika u docker grupu..."
