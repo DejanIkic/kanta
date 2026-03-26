@@ -4,14 +4,16 @@ Glavna MicroPython skripta za Raspberry Pi Pico
 Autor: AI Assistant
 """
 
-from machine import UART, Pin
 import time
-from servo_driver import SG90Servo
+
+from machine import UART, Pin
 from pin_config import PinConfig
+from servo_driver import SG90Servo
+
 
 class PicoServoController:
     """Kontroler za servo preko UART komunikacije"""
-    
+
     def __init__(self, uart_tx=None, uart_rx=None, baudrate=115200):
         """
         Inicijalizacija UART i serva
@@ -22,28 +24,28 @@ class PicoServoController:
         # Dobavi UART pinove iz konfiguracije
         if uart_tx is None or uart_rx is None:
             uart_tx, uart_rx = PinConfig.get_uart_pins()
-            
+
         # UART inicijalizacija
-        self.uart = UART(uart_tx, uart_rx, baudrate=baudrate)
-        
+        self.uart = UART(0, baudrate=baudrate, tx=Pin(uart_tx), rx=Pin(uart_rx))
+
         # Servo inicijalizacija sa pinom iz konfiguracije
         self.servo = SG90Servo()
-        
+
         # Status LED sa pina iz konfiguracije
         self.led = Pin(PinConfig.get_status_led_pin(), Pin.OUT)
-        
+
         print("Pico Servo Controller - Ready")
         PinConfig.print_pin_mapping()
         self.led_on()
-        
+
     def led_on(self):
         """Uključi internu LED"""
         self.led.value(1)
-        
+
     def led_off(self):
         """Isključi internu LED"""
         self.led.value(0)
-        
+
     def parse_command(self, command):
         """
         Parsira UART komandu
@@ -55,17 +57,17 @@ class PicoServoController:
             if command.startswith("ANGLE:"):
                 angle_str = command.split(":")[1].strip()
                 angle = int(angle_str)
-                
+
                 if 0 <= angle <= 180:
                     return True, angle
                 else:
                     return False, "Angle out of range (0-180)"
             else:
                 return False, "Invalid command format"
-                
+
         except (ValueError, IndexError) as e:
             return False, f"Parse error: {str(e)}"
-    
+
     def send_response(self, success, message):
         """
         Šalje odgovor preko UART-a
@@ -76,39 +78,39 @@ class PicoServoController:
             response = f"OK:{message}\n"
         else:
             response = f"ERROR:{message}\n"
-            
+
         self.uart.write(response.encode())
-    
+
     def run(self):
         """Glavna petlja programa"""
         print("Starting main loop...")
-        
+
         while True:
             try:
                 # Čekaj UART podatke
                 if self.uart.any():
                     # Čitaj liniju (do newline)
                     command = self.uart.readline()
-                    
+
                     if command:
                         # Dekodiraj i očisti komandu
                         command_str = command.decode().strip()
                         print(f"Received: {command_str}")
-                        
+
                         # Blink LED za indikaciju prijema
                         self.led_off()
                         time.sleep(0.1)
                         self.led_on()
-                        
+
                         # Parsiraj komandu
                         success, result = self.parse_command(command_str)
-                        
+
                         if success:
                             # Postavi servo ugao
                             angle = result
                             self.servo.set_angle(angle)
                             print(f"Servo set to angle: {angle}°")
-                            
+
                             # Pošalji potvrdu
                             self.send_response(True, f"Angle set to {angle}")
                         else:
@@ -116,14 +118,15 @@ class PicoServoController:
                             error_msg = result
                             print(f"Error: {error_msg}")
                             self.send_response(False, error_msg)
-                
+
                 # Malo kašnjenje da ne opterećujemo CPU
                 time.sleep(0.01)
-                
+
             except Exception as e:
                 print(f"Main loop error: {str(e)}")
                 self.send_response(False, f"System error: {str(e)}")
                 time.sleep(1)  # Čekaj preko ponovnim pokušajem
+
 
 if __name__ == "__main__":
     try:
@@ -135,6 +138,6 @@ if __name__ == "__main__":
         print(f"Fatal error: {str(e)}")
     finally:
         # Čišćenje resursa
-        if 'controller' in locals():
+        if "controller" in locals():
             controller.servo.cleanup()
         print("Program ended")

@@ -1,7 +1,12 @@
 # Makefile za RPi Pico Servo Control
 # Autor: AI Assistant
 
-.PHONY: help install setup flash deploy test lint format clean docker-up docker-down logs
+# Virtual environment
+VENV   = venv
+PYTHON = venv/bin/python3
+PIP    = venv/bin/pip
+
+.PHONY: help install setup flash deploy test lint format clean docker-up docker-down logs venv
 
 # Default target
 help:
@@ -28,12 +33,20 @@ help:
 	@echo ""
 	@echo "Deployment:"
 	@echo "  deploy      - Deploy aplikaciju"
-	@echo "  clean       - Čisti cache i temp fajlove"
+	@echo "  clean       - Cisti cache i temp fajlove"
+
+# Create virtual environment
+venv:
+	@if [ ! -d "$(VENV)" ]; then \
+		echo "Creating virtual environment..."; \
+		python3 -m venv $(VENV); \
+	fi
 
 # Install dependencies
-install:
-	pip install -r requirements.txt
-	pip install -r rpi_api/requirements.txt
+install: venv
+	$(PIP) install -r requirements.txt
+	$(PIP) install -r rpi_api/requirements.txt
+	@echo "Dependencies installed successfully."
 
 # Setup RPi environment
 setup:
@@ -42,25 +55,25 @@ setup:
 
 # Flash Pico
 flash:
-	python3 scripts/flash_pico.py
+	$(PYTHON) scripts/flash_pico.py
 
 # Development server
 dev:
-	python -m uvicorn rpi_api.main:app --host 0.0.0.0 --port 8000 --reload
+	$(PYTHON) -m uvicorn rpi_api.main:app --host 0.0.0.0 --port 8000 --reload
 
 # Run tests
 test:
-	python -m pytest tests/ -v --tb=short
+	$(PYTHON) -m pytest tests/ -v --tb=short
 
 # Lint code
 lint:
-	python -m flake8 rpi_api/ scripts/
-	python -m mypy rpi_api/
+	$(PYTHON) -m flake8 rpi_api/ scripts/
+	$(PYTHON) -m mypy rpi_api/
 
 # Format code
 format:
-	python -m black rpi_api/ scripts/
-	python -m isort rpi_api/ scripts/
+	$(PYTHON) -m black rpi_api/ scripts/
+	$(PYTHON) -m isort rpi_api/ scripts/
 
 # Docker commands
 docker-up:
@@ -95,6 +108,7 @@ clean:
 	find . -type d -name "*.egg-info" -exec rm -rf {} +
 	rm -rf build/
 	rm -rf dist/
+	rm -rf venv/
 	docker system prune -f
 
 # Full setup for new environment

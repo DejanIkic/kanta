@@ -5,6 +5,7 @@ Autor: AI Assistant
 """
 
 import time
+
 import machine
 
 # Inicijalizacija internog LED-a
@@ -16,15 +17,3 @@ for i in range(3):
     time.sleep(0.2)
     led.off()
     time.sleep(0.2)
-
-# Import i pokreni main.py
-try:
-    import main
-except Exception as e:
-    print(f"Boot error: {str(e)}")
-    # Brzo blinkanje ako greška
-    while True:
-        led.on()
-        time.sleep(0.1)
-        led.off()
-        time.sleep(0.1)
