@@ -17,11 +17,17 @@ def find_pico_port():
     ports = serial.tools.list_ports.comports()
     pico_ports = []
     
+    print(f"Pronađeno {len(ports)} COM portova:")
     for port in ports:
-        # Pico se obično javlja kao USB Serial Device
-        if "USB Serial" in port.description or "Pico" in port.description:
+        print(f"  - {port.device}: {port.description} ({port.manufacturer})")
+        
+        # Pico se obično javlja kao USB Serial Device ili MicroPython
+        if ("USB Serial" in port.description or 
+            "Pico" in port.description or 
+            "MicroPython" in port.description or
+            "Board in FS mode" in port.description):
             pico_ports.append(port)
-            print(f"Pronađen Pico port: {port.device} - {port.description}")
+            print(f"*** Pico kandidat: {port.device} - {port.description}")
     
     if not pico_ports:
         print("Pico nije pronađen. Uverite se da:")
@@ -113,7 +119,7 @@ def upload_code(port):
 
 def main():
     """Glavna funkcija"""
-    print("=== Raspberry Pi Pico Flash Tool ===")
+    print("=== Raspberry Pi Pico Upload Tool ===")
     
     # Proveri da li postoji pico_firmware direktorijum
     if not os.path.exists("pico_firmware"):
@@ -126,29 +132,20 @@ def main():
         print("Pico nije pronađen. Pokušajte ponovo.")
         sys.exit(1)
     
-    # Flash firmware
-    if not flash_firmware():
-        print("Firmware flash nije uspeo.")
-        sys.exit(1)
-    
-    # Sačekaj Pico da se pojavi kao serijski port
-    print("Čekam Pico da se registruje kao serijski port...")
-    time.sleep(3)
-    
-    # Pronađeri serijski port
-    pico_port = find_pico_port()
-    if not pico_port:
-        print("Pico serijski port nije pronađen nakon flash-a.")
-        sys.exit(1)
+    # Preskoči flash firmware - već imate MicroPython
+    print("MicroPython firmware već postoji, preskačem flash...")
     
     # Upload koda
+    if isinstance(pico_port, list):
+        pico_port = pico_port[0]  # Uzmi prvi port ako ih je više
+    
     if not upload_code(pico_port):
         print("Upload koda nije uspeo.")
         sys.exit(1)
     
     print("\n=== Uspešno završeno! ===")
-    print("Pico je spreman za korišćenje.")
-    print("Sada možete pokrenuti: docker compose up -d")
+    print("Vaš kod je upload-ovan na Pico.")
+    print("Sada možete pokrenuti aplikaciju: make debug")
 
 if __name__ == "__main__":
     main()

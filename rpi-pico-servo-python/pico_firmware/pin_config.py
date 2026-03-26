@@ -27,9 +27,9 @@ class PinConfig:
         "SIGNAL": {
             "wire_color": "Žuta/naranđa",
             "description": "Servo signal",
-            "pin_number": 1,
-            "pin_name": "GP0",
-            "gpio": 0,
+            "pin_number": 2,  # GP2
+            "pin_name": "GP2",
+            "gpio": 2,
         },
     }
 

@@ -57,7 +57,7 @@ Pico Pinout:
 
 ### USB Konekcija
 - Povežite Pico sa RPi preko USB kabela
-- Pico će se registrovati kao `/dev/ttyAMA10` na RPi
+- Pico će se registrovati kao `/dev/ttyACM0` na RPi
 
 ## Softverski Setup
 
@@ -230,16 +230,16 @@ lsusb | grep Pico
 ls /dev/ttyACM*
 
 # Proveri prava pristupa
-sudo chmod 666 /dev/ttyAMA10
+sudo chmod 666 /dev/ttyACM0
 ```
 
 ### Servo ne reaguje
 ```bash
 # Proveri Pico konekciju
-minicom -D /dev/ttyAMA10 -b 115200
+minicom -D /dev/ttyACM0 -b 115200
 
 # Test komanda
-echo "ANGLE:90" > /dev/ttyAMA10
+echo "ANGLE:90" > /dev/ttyACM0
 ```
 
 ### Database greške
