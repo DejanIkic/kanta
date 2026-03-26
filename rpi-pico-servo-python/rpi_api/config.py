@@ -14,7 +14,7 @@ class Settings(BaseSettings):
     database_url: str = "postgresql://postgres:password@localhost:5432/servo_db"
     
     # Serial port postavke
-    serial_port: str = "/dev/ttyACM0"
+    serial_port: str = "/dev/ttyAMA10"
     serial_baudrate: int = 115200
     serial_timeout: float = 1.0
     

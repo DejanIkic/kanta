@@ -118,7 +118,7 @@ if [ ! -f .env ]; then
 DATABASE_URL=postgresql://postgres:password@localhost:5432/servo_db
 
 # Serial port konfiguracija
-SERIAL_PORT=/dev/ttyACM0
+SERIAL_PORT=/dev/ttyAMA10
 SERIAL_BAUDRATE=115200
 SERIAL_TIMEOUT=1.0
 
@@ -137,7 +137,7 @@ SERVO_MOVE_TIMEOUT=2.0
 EOF
 fi
 
-# Vrati prava za ttyACM0
+# Vrati prava za ttyAMA10
 echo "Konfiguracija udev pravila..."
 sudo tee /etc/udev/rules.d/99-pico.rules > /dev/null <<EOF
 # Raspberry Pi Pico USB Serial

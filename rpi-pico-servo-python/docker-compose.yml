@@ -35,7 +35,7 @@ services:
     container_name: servo_api
     environment:
       - DATABASE_URL=postgresql://postgres:password@postgres:5432/servo_db
-      - SERIAL_PORT=/dev/ttyACM0
+      - SERIAL_PORT=/dev/ttyAMA10
       - SERIAL_BAUDRATE=115200
       - LOG_LEVEL=INFO
     ports:
@@ -45,7 +45,7 @@ services:
         condition: service_healthy
     restart: unless-stopped
     devices:
-      - "/dev/ttyACM0:/dev/ttyACM0"  # USB konekcija za Pico
+      - "/dev/ttyAMA10:/dev/ttyAMA10"  # USB konekcija za Pico
     privileged: true  # Potrebno za pristup serijskom portu
     volumes:
       - ./logs:/app/logs

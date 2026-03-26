@@ -29,15 +29,15 @@ fi
 
 # Proveri Pico konekciju
 echo "Provera Pico konekcije..."
-if [ ! -e "/dev/ttyACM0" ]; then
-    echo "Upozorenje: Pico (/dev/ttyACM0) nije povezan!"
+if [ ! -e "/dev/ttyAMA10" ]; then
+    echo "Upozorenje: Pico (/dev/ttyAMA10) nije povezan!"
     read -p "Nastaviti bez Pico-a? (y/N): " -n 1 -r
     echo
     if [[ ! $REPLY =~ ^[Yy]$ ]]; then
         exit 1
     fi
 else
-    echo "Pico je povezan na /dev/ttyACM0"
+    echo "Pico je povezan na /dev/ttyAMA10"
 fi
 
 # Pull najnovije changes
