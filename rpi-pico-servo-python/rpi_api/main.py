@@ -3,19 +3,28 @@ FastAPI glavna aplikacija za servo kontrolu
 Autor: AI Assistant
 """
 
-from fastapi import FastAPI, HTTPException, Depends, BackgroundTasks
-from fastapi.middleware.cors import CORSMiddleware
-from sqlalchemy.orm import Session
-from sqlalchemy import func, desc
-import structlog
-import uvicorn
 from contextlib import asynccontextmanager
+from datetime import datetime
 from typing import List
 
-from .database import get_db, init_db, check_db_health
-from .models import ServoMovement, ServoMovementCreate, ServoMovementResponse, ServoStatusResponse, ServoHistoryResponse
-from .servo_service import servo_controller
+import structlog
+import uvicorn
+from fastapi import BackgroundTasks, Depends, FastAPI, HTTPException
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
+from sqlalchemy import desc, func
+from sqlalchemy.orm import Session
+
 from .config import settings
+from .database import check_db_health, get_db, init_db
+from .models import (
+    ServoHistoryResponse,
+    ServoMovement,
+    ServoMovementCreate,
+    ServoMovementResponse,
+    ServoStatusResponse,
+)
+from .servo_service import servo_controller
 
 # Strukturirani logging
 structlog.configure(
@@ -28,7 +37,7 @@ structlog.configure(
         structlog.processors.StackInfoRenderer(),
         structlog.processors.format_exc_info,
         structlog.processors.UnicodeDecoder(),
-        structlog.processors.JSONRenderer()
+        structlog.processors.JSONRenderer(),
     ],
     context_class=dict,
     logger_factory=structlog.stdlib.LoggerFactory(),
@@ -38,26 +47,27 @@ structlog.configure(
 
 logger = structlog.get_logger()
 
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """Lifecycle manager za aplikaciju"""
     # Startup
     logger.info("Starting RPi Pico Servo Control API")
-    
+
     try:
         # Inicijalizacija baze
         init_db()
         logger.info("Database initialized")
-        
+
         # Test konekcije sa Pico-om
         connected, _, attempts = servo_controller.get_status()
         if connected:
             logger.info("Successfully connected to Pico")
         else:
             logger.warning("Failed to connect to Pico", attempts=attempts)
-        
+
         yield
-        
+
     except Exception as e:
         logger.error("Startup failed", error=str(e))
         raise
@@ -66,12 +76,13 @@ async def lifespan(app: FastAPI):
         logger.info("Shutting down application")
         servo_controller.cleanup()
 
+
 # Kreiranje FastAPI aplikacije
 app = FastAPI(
     title=settings.api_title,
     version=settings.api_version,
     description=settings.api_description,
-    lifespan=lifespan
+    lifespan=lifespan,
 )
 
 # CORS middleware
@@ -83,35 +94,33 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+
 @app.get("/")
 async def root():
     """Root endpoint sa osnovnim informacijama"""
     return {
         "message": "RPi Pico Servo Control API",
         "version": settings.api_version,
-        "status": "running"
+        "status": "running",
     }
+
 
 @app.get("/health")
 async def health_check():
-    """Health check endpoint"""
     db_healthy = check_db_health()
     pico_connected, _, _ = servo_controller.get_status()
-    
     status = "healthy" if db_healthy and pico_connected else "unhealthy"
-    
     return {
         "status": status,
         "database": "healthy" if db_healthy else "unhealthy",
         "pico_connected": pico_connected,
-        "timestamp": func.now()
+        "timestamp": datetime.utcnow().isoformat(),
     }
+
 
 @app.post("/api/servo/{angle:int}", response_model=ServoMovementResponse)
 async def set_servo_angle(
-    angle: int, 
-    background_tasks: BackgroundTasks,
-    db: Session = Depends(get_db)
+    angle: int, background_tasks: BackgroundTasks, db: Session = Depends(get_db)
 ):
     """
     Postavi servo na zadati ugao
@@ -121,42 +130,41 @@ async def set_servo_angle(
     :return: Informacije o izvršenoj komandi
     """
     logger.info("Setting servo angle", angle=angle)
-    
+
     # Pozovi servo kontroler
     success, error_message, response_time = servo_controller.set_angle(angle)
-    
+
     # Kreiraj zapis u bazi
     servo_movement = ServoMovement(
         angle=angle,
         success=success,
         error_message=error_message,
-        response_time_ms=response_time
+        response_time_ms=response_time,
     )
-    
+
     db.add(servo_movement)
     db.commit()
     db.refresh(servo_movement)
-    
+
     # Loguj u background
     background_tasks.add_task(
-        log_servo_movement,
-        angle=angle,
-        success=success,
-        response_time=response_time
+        log_servo_movement, angle=angle, success=success, response_time=response_time
     )
-    
+
     if not success:
         raise HTTPException(
-            status_code=500,
-            detail=f"Failed to set servo angle: {error_message}"
+            status_code=500, detail=f"Failed to set servo angle: {error_message}"
         )
-    
-    logger.info("Servo angle set successfully", 
-                angle=angle, 
-                movement_id=servo_movement.id,
-                response_time_ms=response_time)
-    
+
+    logger.info(
+        "Servo angle set successfully",
+        angle=angle,
+        movement_id=servo_movement.id,
+        response_time_ms=response_time,
+    )
+
     return servo_movement
+
 
 @app.get("/api/servo/status", response_model=ServoStatusResponse)
 async def get_servo_status(db: Session = Depends(get_db)):
@@ -166,18 +174,19 @@ async def get_servo_status(db: Session = Depends(get_db)):
     :return: Status informacije
     """
     connected, last_command, attempts = servo_controller.get_status()
-    
+
     # Statistika iz baze
     total_movements = db.query(ServoMovement).count()
     error_count = db.query(ServoMovement).filter(ServoMovement.success == False).count()
     error_rate = (error_count / total_movements * 100) if total_movements > 0 else 0.0
-    
+
     return ServoStatusResponse(
         connected=connected,
         last_command=last_command,
         total_movements=total_movements,
-        error_rate=round(error_rate, 2)
+        error_rate=round(error_rate, 2),
     )
+
 
 @app.get("/api/servo/history", response_model=ServoHistoryResponse)
 async def get_servo_history(db: Session = Depends(get_db)):
@@ -186,17 +195,14 @@ async def get_servo_history(db: Session = Depends(get_db)):
     :param db: Database session
     :return: Lista pokreta
     """
-    movements = db.query(ServoMovement)\
-                  .order_by(desc(ServoMovement.timestamp))\
-                  .limit(100)\
-                  .all()
-    
-    total_count = db.query(ServoMovement).count()
-    
-    return ServoHistoryResponse(
-        movements=movements,
-        total_count=total_count
+    movements = (
+        db.query(ServoMovement).order_by(desc(ServoMovement.timestamp)).limit(100).all()
     )
+
+    total_count = db.query(ServoMovement).count()
+
+    return ServoHistoryResponse(movements=movements, total_count=total_count)
+
 
 @app.get("/api/servo/history/{limit:int}", response_model=ServoHistoryResponse)
 async def get_servo_history_limit(limit: int, db: Session = Depends(get_db)):
@@ -207,40 +213,35 @@ async def get_servo_history_limit(limit: int, db: Session = Depends(get_db)):
     :return: Lista pokreta
     """
     if limit < 1 or limit > 1000:
-        raise HTTPException(
-            status_code=400,
-            detail="Limit must be between 1 and 1000"
-        )
-    
-    movements = db.query(ServoMovement)\
-                  .order_by(desc(ServoMovement.timestamp))\
-                  .limit(limit)\
-                  .all()
-    
-    total_count = db.query(ServoMovement).count()
-    
-    return ServoHistoryResponse(
-        movements=movements,
-        total_count=total_count
+        raise HTTPException(status_code=400, detail="Limit must be between 1 and 1000")
+
+    movements = (
+        db.query(ServoMovement)
+        .order_by(desc(ServoMovement.timestamp))
+        .limit(limit)
+        .all()
     )
+
+    total_count = db.query(ServoMovement).count()
+
+    return ServoHistoryResponse(movements=movements, total_count=total_count)
+
 
 async def log_servo_movement(angle: int, success: bool, response_time: int):
     """Background task za logovanje servo pokreta"""
     if success:
-        logger.info("Servo movement completed", 
-                   angle=angle, 
-                   response_time_ms=response_time)
+        logger.info(
+            "Servo movement completed", angle=angle, response_time_ms=response_time
+        )
     else:
         logger.error("Servo movement failed", angle=angle)
 
-# Exception handlers
+
 @app.exception_handler(Exception)
 async def global_exception_handler(request, exc):
     logger.error("Unhandled exception", error=str(exc))
-    return HTTPException(
-        status_code=500,
-        detail="Internal server error"
-    )
+    return JSONResponse(status_code=500, content={"detail": "Internal server error"})
+
 
 if __name__ == "__main__":
     uvicorn.run(
@@ -248,5 +249,5 @@ if __name__ == "__main__":
         host="0.0.0.0",
         port=8000,
         reload=True,  # Za development
-        log_level=settings.log_level.lower()
+        log_level=settings.log_level.lower(),
     )
