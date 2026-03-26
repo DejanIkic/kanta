@@ -97,12 +97,14 @@ class ServoController:
                 if self.serial_conn.in_waiting > 0:
                     data = self.serial_conn.readline().decode().strip()
                     response += data
-                    logger.info("Received data", data=data, response=response)
                     
-                    if response.startswith("OK:") or response.startswith("ERROR:"):
-                        return response.startswith("OK:")
+                    if "OK:" in response:
+                        return True
+                    elif "ERROR:" in response:
+                        return False
                 
                 time.sleep(0.01)
+
             
             logger.warning("No response to test command", timeout=settings.serial_timeout)
             return False
