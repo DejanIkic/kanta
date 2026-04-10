@@ -104,16 +104,16 @@ class PicoServoController:
                 
                 # Pokreni vertical servo
                 self.vertical_servo.set_angle(positions["vertical"])
-                time.sleep(0.5)  # Delay izmeðu serva
+                time.sleep(0.5)   
                 
                 # Pokreni horizontal servo
                 self.horizontal_servo.set_angle(positions["horizontal"])
-                time.sleep(1.5)  # Delay pre povratka (za dropanje otpada)
+                time.sleep(2.0)  # Povećan delay pre povratka (za dropanje otpada)
                 
                 # Vrati oba serva u baznu poziciju
                 self.vertical_servo.set_angle(0)
                 self.horizontal_servo.set_angle(0)
-                time.sleep(0.5)  # Final delay
+                time.sleep(2.0)  # Povećan final delay
                 
                 response_msg = f"material:{value},vertical:{positions['vertical']},horizontal:{positions['horizontal']},base:0,0"
                 return True, response_msg
