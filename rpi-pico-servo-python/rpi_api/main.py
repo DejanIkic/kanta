@@ -7,7 +7,6 @@ from contextlib import asynccontextmanager
 from datetime import datetime
 from typing import List, Literal
 
-import debugpy
 import structlog
 import uvicorn
 from fastapi import BackgroundTasks, Depends, FastAPI, HTTPException
@@ -139,6 +138,7 @@ async def set_servo_side(
 
     servo_movement = ServoMovement(
         angle=angle,
+        command_type="legacy",  # Backward compatibility
         success=success,
         error_message=error_message,
         response_time_ms=response_time,
@@ -161,6 +161,63 @@ async def set_servo_side(
         "Servo side set successfully",
         side=side,
         angle=angle,
+        movement_id=servo_movement.id,
+        response_time_ms=response_time,
+    )
+
+    return servo_movement
+
+
+@app.post("/api/servo/material/{material_type}", response_model=ServoMovementResponse)
+async def set_servo_material(
+    material_type: Literal["plastic", "glass", "pet", "organic"],
+    background_tasks: BackgroundTasks,
+    db: Session = Depends(get_db),
+):
+    """
+    Postavi servoe za zadati materijal sa kompletnom sekvencom pokreta
+    :param material_type: Tip materijala (plastic, glass, pet, organic)
+    :param background_tasks: FastAPI background tasks
+    :param db: Database session
+    :return: Informacije o izvrðenoj komandi
+    """
+    logger.info("Setting servo material position", material=material_type)
+
+    success, error_message, response_time, positions = servo_controller.set_material_position(material_type)
+
+    # Kreiraj zapis sa informacijama o oba serva
+    servo_movement = ServoMovement(
+        angle=positions["horizontal"] if positions else 0,  # Legacy field - horizontal angle
+        vertical_angle=positions["vertical"] if positions else None,
+        horizontal_angle=positions["horizontal"] if positions else None,
+        material_type=material_type,
+        command_type="material",
+        success=success,
+        error_message=error_message,
+        response_time_ms=response_time,
+    )
+
+    db.add(servo_movement)
+    db.commit()
+    db.refresh(servo_movement)
+
+    background_tasks.add_task(
+        log_material_movement, 
+        material=material_type, 
+        positions=positions, 
+        success=success, 
+        response_time=response_time
+    )
+
+    if not success:
+        raise HTTPException(
+            status_code=500, detail=f"Failed to set material position: {error_message}"
+        )
+
+    logger.info(
+        "Material position set successfully",
+        material=material_type,
+        positions=positions,
         movement_id=servo_movement.id,
         response_time_ms=response_time,
     )
@@ -237,6 +294,20 @@ async def log_servo_movement(angle:int, side: str, success: bool, response_time:
         )
     else:
         logger.error("Servo movement failed", angle=angle, side=side)
+
+
+async def log_material_movement(material: str, positions: dict, success: bool, response_time: int):
+    """Background task za logovanje materijal pokreta"""
+    if success:
+        logger.info(
+            "Material movement completed",
+            material=material,
+            vertical_angle=positions["vertical"],
+            horizontal_angle=positions["horizontal"],
+            response_time_ms=response_time
+        )
+    else:
+        logger.error("Material movement failed", material=material)
 
 
 @app.exception_handler(Exception)

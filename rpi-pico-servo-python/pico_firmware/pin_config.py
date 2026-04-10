@@ -10,6 +10,20 @@ class PinConfig:
 
     # Servo žice → Pico pinovi mapiranje
     SERVO_PINS = {
+        "VERTICAL": {
+            "wire_color": "Žuta/naranđa",
+            "description": "Vertical servo signal (-90 to 90)",
+            "pin_number": 2,  # GP2
+            "pin_name": "GP2",
+            "gpio": 2,
+        },
+        "HORIZONTAL": {
+            "wire_color": "Plava/bela",
+            "description": "Horizontal servo signal (-20 to 20)",
+            "pin_number": 3,  # GP3
+            "pin_name": "GP3",
+            "gpio": 3,
+        },
         "VCC": {
             "wire_color": "Crvena",
             "description": "VCC (3.3V)",
@@ -24,13 +38,6 @@ class PinConfig:
             "pin_name": "GND",
             "voltage": "0V",
         },
-        "SIGNAL": {
-            "wire_color": "Žuta/naranđa",
-            "description": "Servo signal",
-            "pin_number": 2,  # GP2
-            "pin_name": "GP2",
-            "gpio": 2,
-        },
     }
 
     # UART pinovi za komunikaciju
@@ -43,9 +50,14 @@ class PinConfig:
     STATUS_LED = {"pin_number": 25, "pin_name": "GPIO25", "description": "Interni LED"}
 
     @classmethod
-    def get_servo_signal_pin(cls):
-        """Vrati GPIO broj za servo signal"""
-        return cls.SERVO_PINS["SIGNAL"]["gpio"]
+    def get_vertical_pin(cls):
+        """Vrati GPIO broj za vertical servo"""
+        return cls.SERVO_PINS["VERTICAL"]["gpio"]
+
+    @classmethod
+    def get_horizontal_pin(cls):
+        """Vrati GPIO broj za horizontal servo"""
+        return cls.SERVO_PINS["HORIZONTAL"]["gpio"]
 
     @classmethod
     def get_uart_pins(cls):

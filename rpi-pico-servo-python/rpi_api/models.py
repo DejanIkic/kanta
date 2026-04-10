@@ -14,19 +14,36 @@ from typing import List, Optional
 Base = declarative_base()
 
 class ServoMovement(Base):
-    """Model za praćenje pokreta serva"""
+    """Model za praćenje pokreta serva - podrška dual servo sistema"""
     
     __tablename__ = "servo_movements"
     
     id = Column(Integer, primary_key=True, index=True)
+    
+    # Legacy single servo field (backward compatibility)
     angle = Column(Integer, nullable=False, index=True)
+    
+    # Dual servo fields
+    vertical_angle = Column(Integer, nullable=True)  # -90 to 90
+    horizontal_angle = Column(Integer, nullable=True)  # -20 to 20
+    
+    # Material tracking
+    material_type = Column(String(20), nullable=True, index=True)  # plastic, glass, pet, organic
+    
+    # Metadata
     timestamp = Column(DateTime(timezone=True), server_default=func.now(), index=True)
     success = Column(Boolean, nullable=False, default=True)
     error_message = Column(Text, nullable=True)
     response_time_ms = Column(Integer, nullable=True)  # Vreme odziva u milisekundama
     
+    # Command type tracking
+    command_type = Column(String(20), nullable=True, default="legacy")  # material, vertical, horizontal, base, legacy
+    
     def __repr__(self):
-        return f"<ServoMovement(id={self.id}, angle={self.angle}, success={self.success})>"
+        if self.material_type:
+            return f"<ServoMovement(id={self.id}, material={self.material_type}, v={self.vertical_angle}, h={self.horizontal_angle}, success={self.success})>"
+        else:
+            return f"<ServoMovement(id={self.id}, angle={self.angle}, success={self.success})>"
 
 # Pydantic modeli za API
 class ServoMovementCreate(BaseModel):
@@ -49,9 +66,13 @@ class ServoMovementCreate(BaseModel):
         yield validate_angle
     
 class ServoMovementResponse(BaseModel):
-    """Pydantic model za odgovor sa podacima o pokretu"""
+    """Pydantic model za odgovor sa podacima o pokretu - dual servo podrka"""
     id: int
-    angle: int
+    angle: int  # Legacy field
+    vertical_angle: Optional[int] = None
+    horizontal_angle: Optional[int] = None
+    material_type: Optional[str] = None
+    command_type: Optional[str] = None
     timestamp: datetime
     success: bool
     error_message: Optional[str] = None

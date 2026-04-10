@@ -115,7 +115,7 @@ class ServoController:
     
     def set_angle(self, angle: int) -> Tuple[bool, Optional[str], Optional[int]]:
         """
-        Postavi servo na zadati ugao
+        Postavi servo na zadati ugao (legacy - horizontal servo)
         :param angle: Ugao u stepenima (-20:20) (-90:90)
         :return: (success, error_message, response_time_ms)
         """
@@ -181,12 +181,282 @@ class ServoController:
     
     def get_status(self) -> Tuple[bool, Optional[datetime], int]:
         """
-        Vraća status konekcije
+        Vraæa status konekcije
         :return: (connected, last_command_time, connection_attempts)
         """
         connected = self.connect()
         return connected, self.last_command_time, self.connection_attempts
-    
+
+    def set_vertical_angle(self, angle: int) -> Tuple[bool, Optional[str], Optional[int]]:
+        """
+        Postavi vertical servo na zadati ugao
+        :param angle: Ugao u stepenima (-90 to 90)
+        :return: (success, error_message, response_time_ms)
+        """
+        start_time = time.time()
+        
+        try:
+            # Validacija ugla
+            if not (-90 <= angle <= 90):
+                return False, "Vertical angle must be between -90 and 90", None
+            
+            # Poveži se ako nismo konektovani
+            if not self.connect():
+                return False, "Failed to connect to Pico", None
+            
+            # Pošalji komandu
+            command = f"VERTICAL:{angle}\n"
+            logger.info("Sending vertical servo command", angle=angle, command=command.strip())
+            
+            self.serial_conn.write(command.encode())
+            self.serial_conn.flush()
+            
+            # Čekaj odgovor
+            response = ""
+            response_start = time.time()
+            
+            while (time.time() - response_start) < settings.servo_move_timeout:
+                if self.serial_conn.in_waiting > 0:
+                    data = self.serial_conn.readline().decode().strip()
+                    response += data
+                    
+                    if response.startswith("OK:"):
+                        self.last_command_time = datetime.now()
+                        response_time = int((time.time() - start_time) * 1000)
+                        logger.info("Vertical servo command successful", 
+                                  angle=angle, 
+                                  response_time_ms=response_time)
+                        return True, None, response_time
+                    elif response.startswith("ERROR:"):
+                        error_msg = response.replace("ERROR:", "").strip()
+                        logger.error("Vertical servo command failed", angle=angle, error=error_msg)
+                        return False, error_msg, None
+                
+                time.sleep(0.01)
+            
+            # Timeout
+            response_time = int((time.time() - start_time) * 1000)
+            error_msg = "Timeout waiting for vertical servo response"
+            logger.error("Vertical servo command timeout", 
+                        angle=angle, 
+                        timeout=settings.servo_move_timeout,
+                        response_time_ms=response_time)
+            return False, error_msg, response_time
+            
+        except serial.SerialException as e:
+            error_msg = f"Serial communication error: {str(e)}"
+            logger.error("Serial error", angle=angle, error=str(e))
+            self.disconnect()
+            return False, error_msg, None
+        except Exception as e:
+            error_msg = f"Unexpected error: {str(e)}"
+            logger.error("Unexpected vertical servo error", angle=angle, error=str(e))
+            return False, error_msg, None
+
+    def set_horizontal_angle(self, angle: int) -> Tuple[bool, Optional[str], Optional[int]]:
+        """
+        Postavi horizontal servo na zadati ugao
+        :param angle: Ugao u stepenima (-20 to 20)
+        :return: (success, error_message, response_time_ms)
+        """
+        start_time = time.time()
+        
+        try:
+            # Validacija ugla
+            if not (-20 <= angle <= 20):
+                return False, "Horizontal angle must be between -20 and 20", None
+            
+            # Poveži se ako nismo konektovani
+            if not self.connect():
+                return False, "Failed to connect to Pico", None
+            
+            # Pošalji komandu
+            command = f"HORIZONTAL:{angle}\n"
+            logger.info("Sending horizontal servo command", angle=angle, command=command.strip())
+            
+            self.serial_conn.write(command.encode())
+            self.serial_conn.flush()
+            
+            # Čekaj odgovor
+            response = ""
+            response_start = time.time()
+            
+            while (time.time() - response_start) < settings.servo_move_timeout:
+                if self.serial_conn.in_waiting > 0:
+                    data = self.serial_conn.readline().decode().strip()
+                    response += data
+                    
+                    if response.startswith("OK:"):
+                        self.last_command_time = datetime.now()
+                        response_time = int((time.time() - start_time) * 1000)
+                        logger.info("Horizontal servo command successful", 
+                                  angle=angle, 
+                                  response_time_ms=response_time)
+                        return True, None, response_time
+                    elif response.startswith("ERROR:"):
+                        error_msg = response.replace("ERROR:", "").strip()
+                        logger.error("Horizontal servo command failed", angle=angle, error=error_msg)
+                        return False, error_msg, None
+                
+                time.sleep(0.01)
+            
+            # Timeout
+            response_time = int((time.time() - start_time) * 1000)
+            error_msg = "Timeout waiting for horizontal servo response"
+            logger.error("Horizontal servo command timeout", 
+                        angle=angle, 
+                        timeout=settings.servo_move_timeout,
+                        response_time_ms=response_time)
+            return False, error_msg, response_time
+            
+        except serial.SerialException as e:
+            error_msg = f"Serial communication error: {str(e)}"
+            logger.error("Serial error", angle=angle, error=str(e))
+            self.disconnect()
+            return False, error_msg, None
+        except Exception as e:
+            error_msg = f"Unexpected error: {str(e)}"
+            logger.error("Unexpected horizontal servo error", angle=angle, error=str(e))
+            return False, error_msg, None
+
+    def set_material_position(self, material: str) -> Tuple[bool, Optional[str], Optional[int], Optional[dict]]:
+        """
+        Postavi servoe za zadati materijal sa kompletnom sekvencom
+        :param material: Tip materijala (plastic, glass, pet, organic)
+        :return: (success, error_message, response_time_ms, positions_used)
+        """
+        from .config import settings
+        
+        # Mapiranje materijala na pozicije
+        material_positions = {
+            "plastic": {"vertical": -90, "horizontal": -20},
+            "glass": {"vertical": -90, "horizontal": 20},
+            "pet": {"vertical": 90, "horizontal": -20},
+            "organic": {"vertical": 90, "horizontal": 20}
+        }
+        
+        start_time = time.time()
+        
+        try:
+            # Validacija materijala
+            if material not in material_positions:
+                return False, f"Unknown material: {material}", None, None
+            
+            positions = material_positions[material]
+            
+            # Poveži se ako nismo konektovani
+            if not self.connect():
+                return False, "Failed to connect to Pico", None, None
+            
+            # Pošalji MATERIAL komandu
+            command = f"MATERIAL:{material.lower()}\n"
+            logger.info("Sending material command", material=material, positions=positions, command=command.strip())
+            
+            self.serial_conn.write(command.encode())
+            self.serial_conn.flush()
+            
+            # Čekaj odgovor (duže zbog sekvencijalnog pokreta - 2.5s total)
+            extended_timeout = settings.servo_move_timeout * 4  # 4x duže za kompletnu sekvencu (2.5s)
+            response = ""
+            response_start = time.time()
+            
+            while (time.time() - response_start) < extended_timeout:
+                if self.serial_conn.in_waiting > 0:
+                    data = self.serial_conn.readline().decode().strip()
+                    response += data
+                    
+                    if response.startswith("OK:"):
+                        self.last_command_time = datetime.now()
+                        response_time = int((time.time() - start_time) * 1000)
+                        logger.info("Material command successful", 
+                                  material=material, 
+                                  positions=positions,
+                                  response_time_ms=response_time)
+                        return True, None, response_time, positions
+                    elif response.startswith("ERROR:"):
+                        error_msg = response.replace("ERROR:", "").strip()
+                        logger.error("Material command failed", material=material, error=error_msg)
+                        return False, error_msg, None, None
+                
+                time.sleep(0.01)
+            
+            # Timeout
+            response_time = int((time.time() - start_time) * 1000)
+            error_msg = "Timeout waiting for material sequence completion"
+            logger.error("Material command timeout", 
+                        material=material, 
+                        timeout=extended_timeout,
+                        response_time_ms=response_time)
+            return False, error_msg, response_time, None
+            
+        except serial.SerialException as e:
+            error_msg = f"Serial communication error: {str(e)}"
+            logger.error("Serial error", material=material, error=str(e))
+            self.disconnect()
+            return False, error_msg, None, None
+        except Exception as e:
+            error_msg = f"Unexpected error: {str(e)}"
+            logger.error("Unexpected material error", material=material, error=str(e))
+            return False, error_msg, None, None
+
+    def return_to_base(self) -> Tuple[bool, Optional[str], Optional[int]]:
+        """
+        Vrati oba serva u baznu poziciju (0, 0)
+        :return: (success, error_message, response_time_ms)
+        """
+        start_time = time.time()
+        
+        try:
+            # Poveži se ako nismo konektovani
+            if not self.connect():
+                return False, "Failed to connect to Pico", None
+            
+            # Pošalji BASE komandu
+            command = "BASE:0\n"
+            logger.info("Sending base command", command=command.strip())
+            
+            self.serial_conn.write(command.encode())
+            self.serial_conn.flush()
+            
+            # Čekaj odgovor
+            response = ""
+            response_start = time.time()
+            
+            while (time.time() - response_start) < settings.servo_move_timeout:
+                if self.serial_conn.in_waiting > 0:
+                    data = self.serial_conn.readline().decode().strip()
+                    response += data
+                    
+                    if response.startswith("OK:"):
+                        self.last_command_time = datetime.now()
+                        response_time = int((time.time() - start_time) * 1000)
+                        logger.info("Base command successful", response_time_ms=response_time)
+                        return True, None, response_time
+                    elif response.startswith("ERROR:"):
+                        error_msg = response.replace("ERROR:", "").strip()
+                        logger.error("Base command failed", error=error_msg)
+                        return False, error_msg, None
+                
+                time.sleep(0.01)
+            
+            # Timeout
+            response_time = int((time.time() - start_time) * 1000)
+            error_msg = "Timeout waiting for base command response"
+            logger.error("Base command timeout", 
+                        timeout=settings.servo_move_timeout,
+                        response_time_ms=response_time)
+            return False, error_msg, response_time
+            
+        except serial.SerialException as e:
+            error_msg = f"Serial communication error: {str(e)}"
+            logger.error("Serial error", error=str(e))
+            self.disconnect()
+            return False, error_msg, None
+        except Exception as e:
+            error_msg = f"Unexpected error: {str(e)}"
+            logger.error("Unexpected base error", error=str(e))
+            return False, error_msg, None
+
     def cleanup(self):
         """Čišćenje resursa"""
         self.disconnect()

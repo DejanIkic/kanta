@@ -34,6 +34,17 @@ class Settings(BaseSettings):
     # Health check postavke
     health_check_interval: float = 30.0  # sekunde
     
+    # Dual servo postavke
+    servo_sequence_delay: float = 0.5  # sekunde izmeðu pokreta serva
+    
+    # Materijal pozicije
+    material_positions: dict = {
+        "plastic": {"vertical": -90, "horizontal": -20},
+        "glass": {"vertical": -90, "horizontal": 20},
+        "pet": {"vertical": 90, "horizontal": -20},
+        "organic": {"vertical": 90, "horizontal": 20}
+    }
+    
     @property
     def servo_min_angle(self) -> int:
         """Minimum servo angle based on orientation"""

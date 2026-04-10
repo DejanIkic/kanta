@@ -1,0 +1,222 @@
+{
+  "api_info": {
+    "title": "RPi Pico Servo Control API",
+    "description": "API za kontrolu SG90 servo motora preko Raspberry Pi Pico",
+    "version": "1.0.0",
+    "base_url": "http://localhost:8000"
+  },
+  "endpoints": [
+    {
+      "method": "GET",
+      "path": "/",
+      "name": "Root Endpoint",
+      "description": "Root endpoint sa osnovnim informacijama",
+      "example_request": "GET /",
+      "example_response": {
+        "message": "RPi Pico Servo Control API",
+        "version": "1.0.0",
+        "status": "running"
+      }
+    },
+    {
+      "method": "GET",
+      "path": "/health",
+      "name": "Health Check",
+      "description": "Proverava stanje sistema (baza, Pico konekcija)",
+      "example_request": "GET /health",
+      "example_response": {
+        "status": "healthy",
+        "database": "healthy", 
+        "pico_connected": false,
+        "timestamp": "2026-04-10T18:47:44.571673Z"
+      }
+    },
+    {
+      "method": "POST",
+      "path": "/api/servo/material/{material_type}",
+      "name": "Set Servo Material Position",
+      "description": "Postavi servoe za zadati materijal sa kompletnom sekvencom pokreta (2.5s total)",
+      "parameters": {
+        "path": {
+          "material_type": {
+            "type": "string",
+            "enum": ["plastic", "glass", "pet", "organic"],
+            "required": true,
+            "description": "Tip materijala"
+          }
+        }
+      },
+      "material_positions": {
+        "plastic": {"vertical": -90, "horizontal": -20},
+        "glass": {"vertical": -90, "horizontal": 20},
+        "pet": {"vertical": 90, "horizontal": -20},
+        "organic": {"vertical": 90, "horizontal": 20}
+      },
+      "sequence": [
+        "Move vertical servo to target angle",
+        "Wait 0.5s",
+        "Move horizontal servo to target angle",
+        "Wait 1.5s (trash drop time)",
+        "Return both servos to base position (0°, 0°)",
+        "Wait 0.5s",
+        "Return response"
+      ],
+      "example_requests": [
+        "POST /api/servo/material/plastic",
+        "POST /api/servo/material/glass",
+        "POST /api/servo/material/pet",
+        "POST /api/servo/material/organic"
+      ],
+      "example_response": {
+        "id": 1,
+        "angle": -20,
+        "vertical_angle": -90,
+        "horizontal_angle": -20,
+        "material_type": "plastic",
+        "command_type": "material",
+        "timestamp": "2026-04-10T18:47:44.571673Z",
+        "success": true,
+        "error_message": null,
+        "response_time_ms": 2500
+      }
+    },
+    {
+      "method": "POST",
+      "path": "/api/servo/{side}",
+      "name": "Set Servo Side (Legacy)",
+      "description": "Postavi servo na levu ili desnu stranu (backward compatibility)",
+      "parameters": {
+        "path": {
+          "side": {
+            "type": "string",
+            "enum": ["left", "right"],
+            "required": true,
+            "description": "Strana na koju se servo postavlja"
+          }
+        }
+      },
+      "mapping": {
+        "left": -20,
+        "right": 20
+      },
+      "example_requests": [
+        "POST /api/servo/left",
+        "POST /api/servo/right"
+      ],
+      "example_response": {
+        "id": 2,
+        "angle": 20,
+        "vertical_angle": null,
+        "horizontal_angle": null,
+        "material_type": null,
+        "command_type": "legacy",
+        "timestamp": "2026-04-10T18:47:44.571673Z",
+        "success": true,
+        "error_message": null,
+        "response_time_ms": 150
+      }
+    },
+    {
+      "method": "GET",
+      "path": "/api/servo/status",
+      "name": "Get Servo Status",
+      "description": "Vraæa status serva i konekcije",
+      "example_request": "GET /api/servo/status",
+      "example_response": {
+        "connected": true,
+        "last_command": "2026-04-10T18:47:44.571673Z",
+        "total_movements": 10,
+        "error_rate": 0.0
+      }
+    },
+    {
+      "method": "GET",
+      "path": "/api/servo/history",
+      "name": "Get Servo History",
+      "description": "Vraæa istoriju zadnjih 100 pokreta serva",
+      "example_request": "GET /api/servo/history",
+      "example_response": {
+        "movements": [
+          {
+            "id": 1,
+            "angle": -20,
+            "vertical_angle": -90,
+            "horizontal_angle": -20,
+            "material_type": "plastic",
+            "command_type": "material",
+            "timestamp": "2026-04-10T18:47:44.571673Z",
+            "success": true,
+            "error_message": null,
+            "response_time_ms": 2500
+          }
+        ],
+        "total_count": 1
+      }
+    },
+    {
+      "method": "GET",
+      "path": "/api/servo/history/{limit}",
+      "name": "Get Servo History with Limit",
+      "description": "Vraæa istoriju pokreta sa zadatim limitom (1-1000)",
+      "parameters": {
+        "path": {
+          "limit": {
+            "type": "integer",
+            "min": 1,
+            "max": 1000,
+            "required": true,
+            "description": "Maksimalan broj zapisa"
+          }
+        }
+      },
+      "example_requests": [
+        "GET /api/servo/history/10",
+        "GET /api/servo/history/50",
+        "GET /api/servo/history/1000"
+      ],
+      "example_response": {
+        "movements": [
+          {
+            "id": 1,
+            "angle": -20,
+            "vertical_angle": -90,
+            "horizontal_angle": -20,
+            "material_type": "plastic",
+            "command_type": "material",
+            "timestamp": "2026-04-10T18:47:44.571673Z",
+            "success": true,
+            "error_message": null,
+            "response_time_ms": 2500
+          }
+        ],
+        "total_count": 50
+      }
+    }
+  ],
+  "hardware_info": {
+    "servo_configuration": {
+      "vertical_servo": {
+        "pin": "GP2",
+        "gpio": 2,
+        "range": "-90° to 90°",
+        "wire_color": "Yellow/Orange"
+      },
+      "horizontal_servo": {
+        "pin": "GP3", 
+        "gpio": 3,
+        "range": "-20° to 20°",
+        "wire_color": "Blue/White"
+      }
+    },
+    "communication": {
+      "protocol": "USB Serial",
+      "baudrate": 115200,
+      "timeout": 10.0
+    }
+  },
+  "error_codes": {
+    "400": "Bad Request - Invalid parameters",
+    "422": "Validation Error - Invalid enum values",
+    "500": "Internal Server Error - Hardware/connection issues"
+  }
+}

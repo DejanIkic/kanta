@@ -1,0 +1,450 @@
+{
+  "info": {
+    "name": "RPi Pico Servo Control API Test Collection",
+    "description": "Comprehensive test collection for dual servo waste sorting system",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://localhost:8000",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "System Health",
+      "item": [
+        {
+          "name": "Root Endpoint",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/",
+              "host": ["{{base_url}}"],
+              "path": [""]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Health Check",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/health",
+              "host": ["{{base_url}}"],
+              "path": ["health"]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Material Positioning Tests",
+      "item": [
+        {
+          "name": "Plastic Position",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/servo/material/plastic",
+              "host": ["{{base_url}}"],
+              "path": ["api", "servo", "material", "plastic"]
+            }
+          },
+          "response": [],
+          "test": {
+            "script": {
+              "exec": [
+                "// Test plastic positioning",
+                "pm.test('Status code is 200', function () {",
+                "    pm.response.to.have.status(200);",
+                "});",
+                "",
+                "pm.test('Material type is plastic', function () {",
+                "    const jsonData = pm.response.json();",
+                "    pm.expect(jsonData.material_type).to.eql('plastic');",
+                "});",
+                "",
+                "pm.test('Vertical angle is -90', function () {",
+                "    const jsonData = pm.response.json();",
+                "    pm.expect(jsonData.vertical_angle).to.eql(-90);",
+                "});",
+                "",
+                "pm.test('Horizontal angle is -20', function () {",
+                "    const jsonData = pm.response.json();",
+                "    pm.expect(jsonData.horizontal_angle).to.eql(-20);",
+                "});",
+                "",
+                "pm.test('Command type is material', function () {",
+                "    const jsonData = pm.response.json();",
+                "    pm.expect(jsonData.command_type).to.eql('material');",
+                "});",
+                "",
+                "pm.test('Response time is reasonable (<3000ms)', function () {",
+                "    const jsonData = pm.response.json();",
+                "    pm.expect(jsonData.response_time_ms).to.be.below(3000);",
+                "});"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Glass Position",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/servo/material/glass",
+              "host": ["{{base_url}}"],
+              "path": ["api", "servo", "material", "glass"]
+            }
+          },
+          "response": [],
+          "test": {
+            "script": {
+              "exec": [
+                "// Test glass positioning",
+                "pm.test('Status code is 200', function () {",
+                "    pm.response.to.have.status(200);",
+                "});",
+                "",
+                "pm.test('Material type is glass', function () {",
+                "    const jsonData = pm.response.json();",
+                "    pm.expect(jsonData.material_type).to.eql('glass');",
+                "});",
+                "",
+                "pm.test('Vertical angle is -90', function () {",
+                "    const jsonData = pm.response.json();",
+                "    pm.expect(jsonData.vertical_angle).to.eql(-90);",
+                "});",
+                "",
+                "pm.test('Horizontal angle is 20', function () {",
+                "    const jsonData = pm.response.json();",
+                "    pm.expect(jsonData.horizontal_angle).to.eql(20);",
+                "});"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Pet Position",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/servo/material/pet",
+              "host": ["{{base_url}}"],
+              "path": ["api", "servo", "material", "pet"]
+            }
+          },
+          "response": [],
+          "test": {
+            "script": {
+              "exec": [
+                "// Test pet positioning",
+                "pm.test('Status code is 200', function () {",
+                "    pm.response.to.have.status(200);",
+                "});",
+                "",
+                "pm.test('Material type is pet', function () {",
+                "    const jsonData = pm.response.json();",
+                "    pm.expect(jsonData.material_type).to.eql('pet');",
+                "});",
+                "",
+                "pm.test('Vertical angle is 90', function () {",
+                "    const jsonData = pm.response.json();",
+                "    pm.expect(jsonData.vertical_angle).to.eql(90);",
+                "});",
+                "",
+                "pm.test('Horizontal angle is -20', function () {",
+                "    const jsonData = pm.response.json();",
+                "    pm.expect(jsonData.horizontal_angle).to.eql(-20);",
+                "});"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Organic Position",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/servo/material/organic",
+              "host": ["{{base_url}}"],
+              "path": ["api", "servo", "material", "organic"]
+            }
+          },
+          "response": [],
+          "test": {
+            "script": {
+              "exec": [
+                "// Test organic positioning",
+                "pm.test('Status code is 200', function () {",
+                "    pm.response.to.have.status(200);",
+                "});",
+                "",
+                "pm.test('Material type is organic', function () {",
+                "    const jsonData = pm.response.json();",
+                "    pm.expect(jsonData.material_type).to.eql('organic');",
+                "});",
+                "",
+                "pm.test('Vertical angle is 90', function () {",
+                "    const jsonData = pm.response.json();",
+                "    pm.expect(jsonData.vertical_angle).to.eql(90);",
+                "});",
+                "",
+                "pm.test('Horizontal angle is 20', function () {",
+                "    const jsonData = pm.response.json();",
+                "    pm.expect(jsonData.horizontal_angle).to.eql(20);",
+                "});"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Invalid Material - Should Fail",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/servo/material/metal",
+              "host": ["{{base_url}}"],
+              "path": ["api", "servo", "material", "metal"]
+            }
+          },
+          "response": [],
+          "test": {
+            "script": {
+              "exec": [
+                "// Test invalid material rejection",
+                "pm.test('Status code is 422', function () {",
+                "    pm.response.to.have.status(422);",
+                "});",
+                "",
+                "pm.test('Error message mentions valid materials', function () {",
+                "    const jsonData = pm.response.json();",
+                "    pm.expect(jsonData.detail[0].msg).to.include('plastic', 'glass', 'pet', 'organic');",
+                "});"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Legacy Tests (Backward Compatibility)",
+      "item": [
+        {
+          "name": "Servo Left",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/servo/left",
+              "host": ["{{base_url}}"],
+              "path": ["api", "servo", "left"]
+            }
+          },
+          "response": [],
+          "test": {
+            "script": {
+              "exec": [
+                "// Test legacy left positioning",
+                "pm.test('Status code is 200', function () {",
+                "    pm.response.to.have.status(200);",
+                "});",
+                "",
+                "pm.test('Angle is -20 (left)', function () {",
+                "    const jsonData = pm.response.json();",
+                "    pm.expect(jsonData.angle).to.eql(-20);",
+                "});",
+                "",
+                "pm.test('Command type is legacy', function () {",
+                "    const jsonData = pm.response.json();",
+                "    pm.expect(jsonData.command_type).to.eql('legacy');",
+                "});"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Servo Right",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/servo/right",
+              "host": ["{{base_url}}"],
+              "path": ["api", "servo", "right"]
+            }
+          },
+          "response": [],
+          "test": {
+            "script": {
+              "exec": [
+                "// Test legacy right positioning",
+                "pm.test('Status code is 200', function () {",
+                "    pm.response.to.have.status(200);",
+                "});",
+                "",
+                "pm.test('Angle is 20 (right)', function () {",
+                "    const jsonData = pm.response.json();",
+                "    pm.expect(jsonData.angle).to.eql(20);",
+                "});",
+                "",
+                "pm.test('Command type is legacy', function () {",
+                "    const jsonData = pm.response.json();",
+                "    pm.expect(jsonData.command_type).to.eql('legacy');",
+                "});"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Status and History Tests",
+      "item": [
+        {
+          "name": "Get Servo Status",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/servo/status",
+              "host": ["{{base_url}}"],
+              "path": ["api", "servo", "status"]
+            }
+          },
+          "response": [],
+          "test": {
+            "script": {
+              "exec": [
+                "// Test servo status",
+                "pm.test('Status code is 200', function () {",
+                "    pm.response.to.have.status(200);",
+                "});",
+                "",
+                "pm.test('Status response has required fields', function () {",
+                "    const jsonData = pm.response.json();",
+                "    pm.expect(jsonData).to.have.property('connected');",
+                "    pm.expect(jsonData).to.have.property('total_movements');",
+                "    pm.expect(jsonData).to.have.property('error_rate');",
+                "});",
+                "",
+                "pm.test('Error rate is valid percentage', function () {",
+                "    const jsonData = pm.response.json();",
+                "    pm.expect(jsonData.error_rate).to.be.at.least(0);",
+                "    pm.expect(jsonData.error_rate).to.be.at.most(100);",
+                "});"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Servo History",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/servo/history",
+              "host": ["{{base_url}}"],
+              "path": ["api", "servo", "history"]
+            }
+          },
+          "response": [],
+          "test": {
+            "script": {
+              "exec": [
+                "// Test servo history",
+                "pm.test('Status code is 200', function () {",
+                "    pm.response.to.have.status(200);",
+                "});",
+                "",
+                "pm.test('History response has required fields', function () {",
+                "    const jsonData = pm.response.json();",
+                "    pm.expect(jsonData).to.have.property('movements');",
+                "    pm.expect(jsonData).to.have.property('total_count');",
+                "});",
+                "",
+                "pm.test('Movements is an array', function () {",
+                "    const jsonData = pm.response.json();",
+                "    pm.expect(jsonData.movements).to.be.an('array');",
+                "});"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Servo History with Limit",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/servo/history/5",
+              "host": ["{{base_url}}"],
+              "path": ["api", "servo", "history", "5"]
+            }
+          },
+          "response": [],
+          "test": {
+            "script": {
+              "exec": [
+                "// Test limited history",
+                "pm.test('Status code is 200', function () {",
+                "    pm.response.to.have.status(200);",
+                "});",
+                "",
+                "pm.test('Movement count matches or exceeds limit', function () {",
+                "    const jsonData = pm.response.json();",
+                "    pm.expect(jsonData.movements.length).to.be.at.most(5);",
+                "});"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Performance Tests",
+      "item": [
+        {
+          "name": "Rapid Material Changes",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/servo/material/plastic",
+              "host": ["{{base_url}}"],
+              "path": ["api", "servo", "material", "plastic"]
+            }
+          },
+          "response": [],
+          "test": {
+            "script": {
+              "exec": [
+                "// Performance test",
+                "pm.test('Response time is reasonable (<3000ms)', function () {",
+                "    const jsonData = pm.response.json();",
+                "    pm.expect(jsonData.response_time_ms).to.be.below(3000);",
+                "});",
+                "",
+                "pm.test('Response time is recorded', function () {",
+                "    const jsonData = pm.response.json();",
+                "    pm.expect(jsonData.response_time_ms).to.be.a('number');",
+                "});"
+              ]
+            }
+          }
+        }
+      ]
+    }
+  ]
+}

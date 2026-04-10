@@ -1,0 +1,70 @@
+{
+  "total_tests": 12,
+  "passed": 3,
+  "failed": 9,
+  "success_rate": 25.0,
+  "duration": 24.5272057056427,
+  "overall_success": false,
+  "results": [
+    {
+      "test": "Root Endpoint",
+      "success": true,
+      "details": "Status: 200, Message: RPi Pico Servo Control API, Version: 1.0.0"
+    },
+    {
+      "test": "Health Check",
+      "success": true,
+      "details": "Status: 200, System: unhealthy, DB: healthy, Pico: False"
+    },
+    {
+      "test": "Material - PLASTIC",
+      "success": false,
+      "details": "Status: 500, Response: {\"detail\":\"Internal server error\"}"
+    },
+    {
+      "test": "Material - GLASS",
+      "success": false,
+      "details": "Status: 500, Response: {\"detail\":\"Internal server error\"}"
+    },
+    {
+      "test": "Material - PET",
+      "success": false,
+      "details": "Status: 500, Response: {\"detail\":\"Internal server error\"}"
+    },
+    {
+      "test": "Material - ORGANIC",
+      "success": false,
+      "details": "Status: 500, Response: {\"detail\":\"Internal server error\"}"
+    },
+    {
+      "test": "Invalid Material Rejection",
+      "success": true,
+      "details": "Status: 422, Correctly rejected invalid material"
+    },
+    {
+      "test": "Legacy - LEFT",
+      "success": false,
+      "details": "Status: 500"
+    },
+    {
+      "test": "Legacy - RIGHT",
+      "success": false,
+      "details": "Status: 500"
+    },
+    {
+      "test": "Status",
+      "success": false,
+      "details": "Status: 500"
+    },
+    {
+      "test": "History",
+      "success": false,
+      "details": "Status: 500"
+    },
+    {
+      "test": "History (limit 5)",
+      "success": false,
+      "details": "Status: 500"
+    }
+  ]
+}
