@@ -135,7 +135,10 @@ class TestServoEndpoints:
     
     def test_set_servo_angle_invalid_angle(self, mock_servo_controller, mock_db):
         """Test nevalidnog ugla serva"""
-        response = client.post("/api/servo/200")  # Ugao van opsega
+        # Mock servo controller to avoid actual serial calls
+        mock_servo_controller.set_angle.return_value = (False, "Angle must be between 54 and 126", None)
+
+        response = client.post("/api/servo/0")  # Ugao van opsega (manji od 54 za horizontal)
         assert response.status_code == 422  # Validation error
     
     def test_get_servo_status(self, mock_servo_controller, mock_db):

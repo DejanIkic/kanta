@@ -124,7 +124,7 @@ python -m uvicorn rpi_api.main:app --host 0.0.0.0 --port 8000 --reload
 ## API Endpoint-i
 
 ### Kontrola Serva
-- `POST /api/servo/{angle}` - Postavi servo na ugao (0-180°)
+- `POST /api/servo/{angle}` - Postavi servo na ugao (range depends on orientation: 30-150° for vertical, 54-126° for horizontal)
 - `GET /api/servo/status` - Status konekcije sa Pico-om
 - `GET /api/servo/history` - Zadnjih 100 pokreta iz baze
 
@@ -317,7 +317,7 @@ cp .env.example .env
 ### ServoControl
 | Method | Endpoint | Description |
 |--------|----------|-------------|
-| POST | `/api/servo/{angle}` | Set servo angle (0-180°) |
+| POST | `/api/servo/{angle}` | Set servo angle (range depends on orientation: 30-150° for vertical, 54-126° for horizontal) |
 | GET | `/api/servo/status` | Get connection status |
 | GET | `/api/servo/history` | Get movement history |
 | GET | `/api/servo/history/{limit}` | Get limited history |

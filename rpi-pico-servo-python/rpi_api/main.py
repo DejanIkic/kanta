@@ -131,6 +131,12 @@ async def set_servo_angle(
     """
     logger.info("Setting servo angle", angle=angle)
 
+    # Validacija ugla na endpoint nivou
+    if not (0 <= angle <= 180):
+        raise HTTPException(
+            status_code=400, detail=f"Angle must be between 0 and 180 degrees"
+        )
+
     # Pozovi servo kontroler
     success, error_message, response_time = servo_controller.set_angle(angle)
 

@@ -9,7 +9,7 @@ from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.sql import func
 from datetime import datetime
 from pydantic import BaseModel, Field
-from typing import Optional
+from typing import List, Optional
 
 Base = declarative_base()
 
@@ -31,7 +31,22 @@ class ServoMovement(Base):
 # Pydantic modeli za API
 class ServoMovementCreate(BaseModel):
     """Pydantic model za kreiranje servo pokreta"""
-    angle: int = Field(..., ge=0, le=180, description="Ugao serva u stepenima (0-180)")
+    angle: int
+    
+    @classmethod
+    def __get_validators__(cls):
+        # Get dynamic limits from settings
+        from .config import settings
+        min_angle = settings.servo_min_angle
+        max_angle = settings.servo_max_angle
+        
+        # Validate angle is within dynamic range
+        def validate_angle(value):
+            if not (min_angle <= value <= max_angle):
+                raise ValueError(f'Angle must be between {min_angle} and {max_angle}')
+            return int(value)
+        
+        yield validate_angle
     
 class ServoMovementResponse(BaseModel):
     """Pydantic model za odgovor sa podacima o pokretu"""
