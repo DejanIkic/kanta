@@ -7,6 +7,7 @@ from contextlib import asynccontextmanager
 from datetime import datetime
 from typing import List
 
+import debugpy
 import structlog
 import uvicorn
 from fastapi import BackgroundTasks, Depends, FastAPI, HTTPException

@@ -21,6 +21,7 @@ class ServoController:
         self.last_command_time: Optional[datetime] = None
         self.connection_attempts = 0
         self.max_connection_attempts = 3
+        self.serial_port = settings.serial_port
         
     def connect(self) -> bool:
         """
@@ -28,15 +29,17 @@ class ServoController:
         :return: True ako je uspešno, False inače
         """
         try:
+            # Ako smo već povezani, vrati True
             if self.serial_conn and self.serial_conn.is_open:
                 return True
-                
-            logger.info("Attempting to connect to Pico", 
-                       port=settings.serial_port, 
-                       baudrate=settings.serial_baudrate)
             
+            # Zatvori postojeću konekciju ako postoji
+            if self.serial_conn:
+                self.serial_conn.close()
+                
+            logger.info("Connecting to Pico", port=self.serial_port)
             self.serial_conn = serial.Serial(
-                port=settings.serial_port,
+                port=self.serial_port,
                 baudrate=settings.serial_baudrate,
                 timeout=settings.serial_timeout,
                 write_timeout=settings.serial_timeout
@@ -83,6 +86,7 @@ class ServoController:
         try:
             # Pošalji test komandu
             test_command = "ANGLE:90\n"
+            logger.info("Sending test command", command=test_command.strip(), port=self.serial_port)
             self.serial_conn.write(test_command.encode())
             
             # Čekaj odgovor
@@ -94,12 +98,15 @@ class ServoController:
                     data = self.serial_conn.readline().decode().strip()
                     response += data
                     
-                    if response.startswith("OK:") or response.startswith("ERROR:"):
-                        return response.startswith("OK:")
+                    if "OK:" in response:
+                        return True
+                    elif "ERROR:" in response:
+                        return False
                 
                 time.sleep(0.01)
+
             
-            logger.warning("No response to test command")
+            logger.warning("No response to test command", timeout=settings.serial_timeout)
             return False
             
         except Exception as e:

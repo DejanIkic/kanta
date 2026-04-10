@@ -16,7 +16,7 @@ class Settings(BaseSettings):
     # Serial port postavke
     serial_port: str = "/dev/ttyACM10"
     serial_baudrate: int = 115200
-    serial_timeout: float = 1.0
+    serial_timeout: float = 10.0
     
     # API postavke
     api_title: str = "RPi Pico Servo Control API"

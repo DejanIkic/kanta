@@ -57,9 +57,13 @@ setup:
 flash:
 	$(PYTHON) scripts/flash_pico.py
 
-# Development server
+# Development server (with debugpy)
 dev:
 	$(PYTHON) -m uvicorn rpi_api.main:app --host 0.0.0.0 --port 8000 --reload
+
+# Debug server (without debugpy)
+debug:
+	$(PYTHON) -m debugpy --listen 0.0.0.0:5679 --wait-for-client -m uvicorn rpi_api.main:app --host 0.0.0.0 --port 8000 --reload
 
 # Run tests
 test:
