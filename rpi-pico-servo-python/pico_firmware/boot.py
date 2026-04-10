@@ -5,7 +5,6 @@ Autor: AI Assistant
 """
 
 import time
-
 import machine
 
 # Inicijalizacija internog LED-a
@@ -17,3 +16,15 @@ for i in range(3):
     time.sleep(0.2)
     led.off()
     time.sleep(0.2)
+
+# Pokreni glavni program
+try:
+    import main
+except Exception as e:
+    print("Failed to start main:", e)
+    # Blink LED 5 puta ako nije uspelo
+    for i in range(5):
+        led.on()
+        time.sleep(0.1)
+        led.off()
+        time.sleep(0.1)

@@ -14,7 +14,7 @@ class Settings(BaseSettings):
     database_url: str = "sqlite:///./servo_db.sqlite3"
     
     # Serial port postavke
-    serial_port: str = "/dev/ttyACM10"
+    serial_port: str = "/dev/ttyACM0"
     serial_baudrate: int = 115200
     serial_timeout: float = 10.0
     
