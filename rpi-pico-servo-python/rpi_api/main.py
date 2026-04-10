@@ -6,6 +6,7 @@ Autor: AI Assistant
 from contextlib import asynccontextmanager
 from datetime import datetime
 from typing import List, Literal
+import time
 
 import structlog
 import uvicorn
@@ -55,14 +56,19 @@ async def lifespan(app: FastAPI):
     logger.info("Starting RPi Pico Servo Control API")
 
     try:
+        # Reset Pico da oistimo bafer
+        logger.info("Resetting Pico to clear buffer...")
+        servo_controller.disconnect()  # Prekini konekciju ako postoji
+        time.sleep(1)  # Pauza za reset
+        
         # Inicijalizacija baze
         init_db()
         logger.info("Database initialized")
 
-        # Test konekcije sa Pico-om
+        # Test konekcije sa Pico-om (automatski cisti bafer)
         connected, _, attempts = servo_controller.get_status()
         if connected:
-            logger.info("Successfully connected to Pico")
+            logger.info("Successfully connected to Pico, buffer cleared")
         else:
             logger.warning("Failed to connect to Pico", attempts=attempts)
 

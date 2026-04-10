@@ -20,6 +20,9 @@ for i in range(3):
 # Pokreni glavni program
 try:
     import main
+    # Start the main controller loop
+    controller = main.PicoServoController()
+    controller.run()
 except Exception as e:
     print("Failed to start main:", e)
     # Blink LED 5 puta ako nije uspelo

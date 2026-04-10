@@ -40,6 +40,7 @@ class PicoServoController:
         }
         
         print("Pico Dual Servo Controller - Ready")
+        PinConfig.block_unused_pins()  # Blokiraj sve nekoriscene pinove
         PinConfig.print_pin_mapping()
         self.led_on()
 
@@ -75,6 +76,10 @@ class PicoServoController:
             elif command.startswith("BASE:"):
                 # Return to base position
                 return True, ("base", 0)
+            
+            elif command.startswith("CLEAR:"):
+                # Clear buffer and reset to base position
+                return True, ("clear", 0)
             
             elif command.startswith("ANGLE:"):  # Backward compatibility
                 angle = int(command.split(":")[1].strip())
@@ -113,7 +118,7 @@ class PicoServoController:
                 # Vrati oba serva u baznu poziciju
                 self.vertical_servo.set_angle(0)
                 self.horizontal_servo.set_angle(0)
-                time.sleep(2.0)  # Povećan final delay
+                time.sleep(0.5)  # 0.5/4  # 2.0/4  # Povećan final delay
                 
                 response_msg = f"material:{value},vertical:{positions['vertical']},horizontal:{positions['horizontal']},base:0,0"
                 return True, response_msg
@@ -131,6 +136,14 @@ class PicoServoController:
                 self.vertical_servo.set_angle(0)
                 self.horizontal_servo.set_angle(0)
                 return True, "base:0,0"
+                
+            elif command_type == "clear":
+                # Clear buffer - reset servos to base position
+                self.vertical_servo.set_angle(0)
+                self.horizontal_servo.set_angle(0)
+                # Clear any internal buffer
+                buf = ""
+                return True, "clear:0,0"
                 
             elif command_type == "legacy":
                 # Backward compatibility - koristi horizontal servo
