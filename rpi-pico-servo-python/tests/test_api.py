@@ -87,7 +87,7 @@ class TestServoEndpoints:
         # Mock database operations
         mock_movement = ServoMovement(
             id=1,
-            angle=90,
+            angle=20,
             timestamp=datetime.now(),
             success=True,
             response_time_ms=150
@@ -96,16 +96,16 @@ class TestServoEndpoints:
         mock_db_instance.commit.return_value = None
         mock_db_instance.refresh.return_value = None
         
-        response = client.post("/api/servo/90")
+        response = client.post("/api/servo/right")
         assert response.status_code == 200
         
         data = response.json()
-        assert data["angle"] == 90
+        assert data["angle"] == 20
         assert data["success"] == True
         assert data["response_time_ms"] == 150
         
         # Proveri da je servo controller pozvan
-        mock_servo_controller.set_angle.assert_called_once_with(90)
+        mock_servo_controller.set_angle.assert_called_once_with(20)
     
     def test_set_servo_angle_failure(self, mock_servo_controller, mock_db):
         """Test neuspešnog postavljanja ugla serva"""
@@ -127,18 +127,18 @@ class TestServoEndpoints:
         mock_db_instance.commit.return_value = None
         mock_db_instance.refresh.return_value = None
         
-        response = client.post("/api/servo/90")
-        assert response.status_code == 500
+        response = client.post("/api/servo/ltrs")
+        assert response.status_code == 422
         
         data = response.json()
-        assert "Failed to set servo angle" in data["detail"]
+        assert "left" in data["detail"]
     
     def test_set_servo_angle_invalid_angle(self, mock_servo_controller, mock_db):
         """Test nevalidnog ugla serva"""
         # Mock servo controller to avoid actual serial calls
-        mock_servo_controller.set_angle.return_value = (False, "Angle must be between 54 and 126", None)
+        mock_servo_controller.set_angle.return_value = (False, "Side must be left or right", None)
 
-        response = client.post("/api/servo/0")  # Ugao van opsega (manji od 54 za horizontal)
+        response = client.post("/api/servo/rrr")  # Ugao pogresan
         assert response.status_code == 422  # Validation error
     
     def test_get_servo_status(self, mock_servo_controller, mock_db):

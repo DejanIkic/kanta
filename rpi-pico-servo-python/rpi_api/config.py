@@ -38,17 +38,17 @@ class Settings(BaseSettings):
     def servo_min_angle(self) -> int:
         """Minimum servo angle based on orientation"""
         if self.servo_orientation.lower() == "vertical":
-            return 30  # 90 - 60
+            return -20  
         else:  # horizontal
-            return 54  # 90 - 36
+            return -90  
     
     @property
     def servo_max_angle(self) -> int:
         """Maximum servo angle based on orientation"""
         if self.servo_orientation.lower() == "vertical":
-            return 150  # 90 + 60
+            return 20  
         else:  # horizontal
-            return 126  # 90 + 36
+            return 90  
     
     class Config:
         env_file = ".env"

@@ -5,7 +5,7 @@ Autor: AI Assistant
 
 from contextlib import asynccontextmanager
 from datetime import datetime
-from typing import List
+from typing import List, Literal
 
 import debugpy
 import structlog
@@ -119,29 +119,24 @@ async def health_check():
     }
 
 
-@app.post("/api/servo/{angle:int}", response_model=ServoMovementResponse)
-async def set_servo_angle(
-    angle: int, background_tasks: BackgroundTasks, db: Session = Depends(get_db)
+@app.post("/api/servo/{side}", response_model=ServoMovementResponse)
+async def set_servo_side(
+    side: Literal["left", "right"],
+    background_tasks: BackgroundTasks,
+    db: Session = Depends(get_db),
 ):
     """
-    Postavi servo na zadati ugao
-    :param angle: Ugao u stepenima (0-180)
+    Postavi servo na levu ili desnu stranu
+    :param side: "left" ili "right"
     :param background_tasks: FastAPI background tasks
     :param db: Database session
     :return: Informacije o izvršenoj komandi
     """
-    logger.info("Setting servo angle", angle=angle)
+    angle = -20 if side == "left" else 20
+    logger.info("Setting servo side", side=side, angle=angle)
 
-    # Validacija ugla na endpoint nivou
-    if not (0 <= angle <= 180):
-        raise HTTPException(
-            status_code=400, detail=f"Angle must be between 0 and 180 degrees"
-        )
-
-    # Pozovi servo kontroler
     success, error_message, response_time = servo_controller.set_angle(angle)
 
-    # Kreiraj zapis u bazi
     servo_movement = ServoMovement(
         angle=angle,
         success=success,
@@ -153,18 +148,18 @@ async def set_servo_angle(
     db.commit()
     db.refresh(servo_movement)
 
-    # Loguj u background
     background_tasks.add_task(
-        log_servo_movement, angle=angle, success=success, response_time=response_time
+        log_servo_movement, angle=angle, side=side, success=success, response_time=response_time
     )
 
     if not success:
         raise HTTPException(
-            status_code=500, detail=f"Failed to set servo angle: {error_message}"
+            status_code=500, detail=f"Failed to set servo side: {error_message}"
         )
 
     logger.info(
-        "Servo angle set successfully",
+        "Servo side set successfully",
+        side=side,
         angle=angle,
         movement_id=servo_movement.id,
         response_time_ms=response_time,
@@ -234,14 +229,14 @@ async def get_servo_history_limit(limit: int, db: Session = Depends(get_db)):
     return ServoHistoryResponse(movements=movements, total_count=total_count)
 
 
-async def log_servo_movement(angle: int, success: bool, response_time: int):
+async def log_servo_movement(angle:int, side: str, success: bool, response_time: int):
     """Background task za logovanje servo pokreta"""
     if success:
         logger.info(
-            "Servo movement completed", angle=angle, response_time_ms=response_time
+            "Servo movement completed",angle=angle, side=side, response_time_ms=response_time
         )
     else:
-        logger.error("Servo movement failed", angle=angle)
+        logger.error("Servo movement failed", angle=angle, side=side)
 
 
 @app.exception_handler(Exception)

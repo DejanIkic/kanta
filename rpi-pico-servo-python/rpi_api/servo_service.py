@@ -85,7 +85,7 @@ class ServoController:
         """
         try:
             # Pošalji test komandu
-            test_command = "ANGLE:90\n"
+            test_command = "ANGLE:20\n"
             logger.info("Sending test command", command=test_command.strip(), port=self.serial_port)
             self.serial_conn.write(test_command.encode())
             
@@ -116,7 +116,7 @@ class ServoController:
     def set_angle(self, angle: int) -> Tuple[bool, Optional[str], Optional[int]]:
         """
         Postavi servo na zadati ugao
-        :param angle: Ugao u stepenima (0-180)
+        :param angle: Ugao u stepenima (-20:20) (-90:90)
         :return: (success, error_message, response_time_ms)
         """
         start_time = time.time()

@@ -23,3 +23,6 @@ httpx==0.25.2
 
 # Monitoring i health checks
 python-multipart==0.0.6
+
+#debug
+debugpy
