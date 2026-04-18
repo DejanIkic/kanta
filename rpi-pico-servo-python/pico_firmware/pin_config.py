@@ -8,7 +8,7 @@ Autor: AI Assistant
 class PinConfig:
     """Konfiguracija pinova za servo motor"""
 
-    # Servo žice → Pico pinovi mapiranje
+    # Servo žice → Pico pinovi mapiranje (SAMO DOZVOLJENI PINOVI)
     SERVO_PINS = {
         "VERTICAL": {
             "wire_color": "Žuta/naranđa",
@@ -27,9 +27,9 @@ class PinConfig:
         "VCC": {
             "wire_color": "Crvena",
             "description": "VCC (3.3V)",
-            "pin_number": 36,
+            "pin_number": 40,  # VBUS
             "pin_name": "VBUS",
-            "voltage": "3.3V",
+            "voltage": "5V",
         },
         "GND": {
             "wire_color": "Crna/smeđa",
@@ -39,6 +39,14 @@ class PinConfig:
             "voltage": "0V",
         },
     }
+
+    # Dozvoljeni fizički pinovi - SVE OSTALE PINOVE BLOKIRATI
+    ALLOWED_PINS = {2, 3, 25}  # GPIO2, GPIO3, LED (fizički pinovi 4,5,25)
+
+    @classmethod
+    def get_blocked_pins(cls):
+        """Vrati set blokiranih pinova"""
+        return {i for i in range(0, 29) if i not in cls.ALLOWED_PINS}
 
     # UART pinovi za komunikaciju
     UART_PINS = {
@@ -70,10 +78,25 @@ class PinConfig:
         return cls.STATUS_LED["pin_number"]
 
     @classmethod
+    def block_unused_pins(cls):
+        """Blokiraj sve nekoriscene GPIO pinove za sigurnost"""
+        from machine import Pin
+        print("Blokiram nekoriscene GPIO pinove za sigurnost...")
+        blocked_pins = cls.get_blocked_pins()
+        for pin_num in blocked_pins:
+            try:
+                pin = Pin(pin_num, Pin.IN, Pin.PULL_DOWN)
+                print(f"  Blokiran GPIO{pin_num}")
+            except Exception as e:
+                print(f"  Ne mogu da blokiram GPIO{pin_num}: {e}")
+        print(f"Dozvoljeni GPIO pinovi: {sorted(cls.ALLOWED_PINS)}")
+        print("Fizički pinovi: 4(GPIO2), 5(GPIO3), 25(LED), 38(GND), 40(VBUS)")
+
+    @classmethod
     def print_pin_mapping(cls):
         """Ispiši mapiranje pinova"""
-        print("Servo žice → Pico pinovi")
-        print("-" * 30)
+        print("Servo žice → Pico pinovi (SAMO DOZVOLJENI PINOVI)")
+        print("-" * 50)
         for pin_type, config in cls.SERVO_PINS.items():
             print(
                 f"{config['wire_color']:12} → {config['pin_name']:8} (Pin {config['pin_number']})"
@@ -86,6 +109,9 @@ class PinConfig:
         print(
             f"RX → {cls.UART_PINS['RX']['pin_name']} (Pin {cls.UART_PINS['RX']['pin_number']})"
         )
+        print()
+        print(f"Dozvoljeni pinovi: {sorted(cls.ALLOWED_PINS)}")
+        print(f"Blokirani pinovi: {sorted(cls.get_blocked_pins())}")
 
 
 if __name__ == "__main__":

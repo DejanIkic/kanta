@@ -6,6 +6,7 @@ Autor: AI Assistant
 
 from machine import Pin, PWM
 import time
+import math
 from pin_config import PinConfig
 
 class SG90Servo:
@@ -35,7 +36,8 @@ class SG90Servo:
         self.max_duty = 65536 * 0.10  # 2ms pulse
         
         # Postavi servo na centar na pochetku
-        self.set_angle(center_angle)
+        self.current_angle = center_angle
+        self.set_angle(center_angle, smooth=False)
         
     def angle_to_duty(self, angle):
         """
@@ -65,29 +67,36 @@ class SG90Servo:
         
         return int(duty)
     
-    def set_angle(self, angle):
+    def set_angle(self, angle, smooth=True):
         """
         Postavi servo na zadati ugao
         :param angle: Ugao u stepenima (unutar angle_range)
+        :param smooth: Da li da koristi glatko kretanje
         """
-        duty = self.angle_to_duty(angle)
-        self.pwm.duty_u16(duty)
+        # uvijek je smooth, bez else grane
+        current_angle = self.current_angle  # koristi praćenu poziciju
+        self.move_smooth_ease(current_angle, angle, steps=30, delay=0.05)
+        self.current_angle = angle  # ažuriraj trenutnu poziciju
         
-    def move_smooth(self, start_angle, end_angle, steps=20, delay=0.05):
+    def move_smooth_ease(self, start_angle, end_angle, steps=30, delay=0.05):
         """
-        Glatko pomeranje serva između dva ugla
+        Glatko pomeranje serva između dva ugla sa easing funkcijom (ease-in-out).
         :param start_angle: Početni ugao
         :param end_angle: Krajnji ugao
         :param steps: Broj koraka
         :param delay: Kašnjenje između koraka
         """
-        angle_step = (end_angle - start_angle) / steps
-        
         for i in range(steps + 1):
-            current_angle = start_angle + (angle_step * i)
-            self.set_angle(int(current_angle))
+            t = i / steps  # t in [0, 1]
+            
+            # Ease-in-out (slično CSS easing easing(0.4, 0, 0.6, 1))
+            eased = (1 - math.cos(t * math.pi)) * 0.5
+            
+            current_angle = start_angle + (end_angle - start_angle) * eased
+            duty = self.angle_to_duty(current_angle)
+            self.pwm.duty_u16(duty)
             time.sleep(delay)
-    
+
     def cleanup(self):
         """Čišćenje resursa"""
         self.pwm.deinit()

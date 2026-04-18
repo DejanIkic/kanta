@@ -6,7 +6,7 @@ VENV   = venv
 PYTHON = venv/bin/python3
 PIP    = venv/bin/pip
 
-.PHONY: help install setup flash deploy test lint format clean docker-up docker-down logs venv
+.PHONY: help install setup flash update-firmware deploy test lint format clean docker-up docker-down logs venv
 
 # Default target
 help:
@@ -18,6 +18,7 @@ help:
 	@echo ""
 	@echo "Pico:"
 	@echo "  flash       - Flash MicroPython na Pico"
+	@echo "  update-firmware - Upload firmware fajlove i restartuj Pico"
 	@echo ""
 	@echo "Development:"
 	@echo "  dev         - Pokreni development server"
@@ -56,6 +57,10 @@ setup:
 # Flash Pico
 flash:
 	$(PYTHON) scripts/flash_pico.py
+
+# Update firmware (upload files and restart)
+update-firmware:
+	$(PYTHON) scripts/update_firmware.py
 
 # Development server (with debugpy)
 dev:

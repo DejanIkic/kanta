@@ -48,6 +48,9 @@ class ServoController:
             # Čekaj da se konekcija stabilizuje
             time.sleep(2)
             
+            # Očisti bafer od preostalih poruka
+            self._clear_buffer()
+            
             # Test komunikacije
             if self._test_connection():
                 logger.info("Successfully connected to Pico")
@@ -66,6 +69,31 @@ class ServoController:
             logger.error("Unexpected connection error", error=str(e))
             self.connection_attempts += 1
             return False
+    
+    def _clear_buffer(self):
+        """
+        Očisti serijski bafer od svih preostalih poruka
+        """
+        try:
+            if self.serial_conn and self.serial_conn.is_open:
+                # Pročitaj i odbaci sve dostupne podatke
+                while self.serial_conn.in_waiting > 0:
+                    discarded = self.serial_conn.read(self.serial_conn.in_waiting)
+                    if discarded:
+                        logger.info(f"Cleared buffer: {len(discarded)} bytes discarded")
+                
+                # Pošalji clear komandu ako Pico podržava
+                clear_cmd = "CLEAR:\n"
+                self.serial_conn.write(clear_cmd.encode())
+                time.sleep(0.1)  # Kratka pauza za obradu
+                
+                # Ponovo očisti sve odgovore
+                while self.serial_conn.in_waiting > 0:
+                    discarded = self.serial_conn.read(self.serial_conn.in_waiting)
+                
+                logger.info("Buffer cleared successfully")
+        except Exception as e:
+            logger.warning(f"Failed to clear buffer: {e}")
     
     def disconnect(self):
         """Prekida konekciju sa Pico-om"""
