@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="Black">
+    <option name="sdkName" value="SSH (sftp://dejan@192.168.100.7:22/home/dejan/.virtualenvs/kanta/bin/python)" />
+  </component>
+  <component name="ProjectRootManager" version="2" project-jdk-name="SSH (sftp://dejan@192.168.100.7:22/home/dejan/.virtualenvs/kanta/bin/python)" project-jdk-type="Python SDK" />
+</project>

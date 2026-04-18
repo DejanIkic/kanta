@@ -26,3 +26,14 @@ python-multipart==0.0.6
 
 #debug
 debugpy
+
+# Smart Bin - Image classification
+numpy>=1.24.0
+opencv-python-headless>=4.8.0
+
+# TFLite - graceful: try/except import, falls back to MockClassifier
+# On RPi5 ARM64: pip install tflite-runtime
+# tflite-runtime>=2.13.0
+
+# picamera2 - apt install only on RPi5: sudo apt install python3-picamera2
+# Not available via pip - try/except import in code

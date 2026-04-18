@@ -1,0 +1,5 @@
+plastic
+glass
+pet
+organic
+other

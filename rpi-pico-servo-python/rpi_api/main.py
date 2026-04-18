@@ -26,6 +26,13 @@ from .models import (
 )
 from .servo_service import servo_controller
 
+# Smart Bin sub-application
+try:
+    from smart_bin.main import smart_bin_app
+    _smart_bin_available = True
+except ImportError:
+    _smart_bin_available = False
+
 # Strukturirani logging
 structlog.configure(
     processors=[
@@ -84,6 +91,11 @@ app = FastAPI(
     description=settings.api_description,
     lifespan=lifespan,
 )
+
+# Mount Smart Bin sub-app
+if _smart_bin_available:
+    app.mount("/smart", smart_bin_app)
+    logger.info("Smart Bin module mounted at /smart")
 
 # CORS middleware
 app.add_middleware(
