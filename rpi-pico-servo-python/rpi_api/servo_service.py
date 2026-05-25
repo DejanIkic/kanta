@@ -51,7 +51,7 @@ class ServoController:
             # Očisti bafer od preostalih poruka
             self._clear_buffer()
             
-            # Test komunikacije
+            # Test komunikacije komandom koja ne pomera servoe.
             if self._test_connection():
                 logger.info("Successfully connected to Pico")
                 self.connection_attempts = 0
@@ -82,16 +82,7 @@ class ServoController:
                     if discarded:
                         logger.info(f"Cleared buffer: {len(discarded)} bytes discarded")
                 
-                # Pošalji clear komandu ako Pico podržava
-                clear_cmd = "CLEAR:\n"
-                self.serial_conn.write(clear_cmd.encode())
-                time.sleep(0.1)  # Kratka pauza za obradu
-                
-                # Ponovo očisti sve odgovore
-                while self.serial_conn.in_waiting > 0:
-                    discarded = self.serial_conn.read(self.serial_conn.in_waiting)
-                
-                logger.info("Buffer cleared successfully")
+                logger.info("Input buffer cleared successfully")
         except Exception as e:
             logger.warning(f"Failed to clear buffer: {e}")
     
@@ -108,13 +99,14 @@ class ServoController:
     
     def _test_connection(self) -> bool:
         """
-        Testira konekciju slanjem test komande
+        Testira konekciju slanjem komande koja ne pomera servoe.
         :return: True ako je odgovor primljen, False inače
         """
         try:
-            # Pošalji test komandu
-            test_command = "ANGLE:20\n"
-            logger.info("Sending test command", command=test_command.strip(), port=self.serial_port)
+            # Firmware vraca ERROR za nepoznatu komandu, cime potvrduje serijsku
+            # komunikaciju bez pomeranja motora.
+            test_command = "PING:\n"
+            logger.info("Sending non-motion probe", command=test_command.strip(), port=self.serial_port)
             self.serial_conn.write(test_command.encode())
             
             # Čekaj odgovor
@@ -126,7 +118,7 @@ class ServoController:
                     data = self.serial_conn.readline().decode().strip()
                     response += data
                     
-                    if "OK:" in response:
+                    if "OK:PONG" in response or "ERROR:Invalid command format" in response:
                         return True
                     elif "ERROR:" in response:
                         return False
@@ -134,7 +126,7 @@ class ServoController:
                 time.sleep(0.01)
 
             
-            logger.warning("No response to test command", timeout=settings.serial_timeout)
+            logger.warning("No response to test command", timeout_seconds=settings.serial_timeout)
             return False
             
         except Exception as e:
@@ -176,11 +168,11 @@ class ServoController:
                     
                     if response.startswith("OK:"):
                         self.last_command_time = datetime.now()
-                        response_time = int((time.time() - start_time) * 1000)
+                        response_time_ms = int((time.time() - start_time) * 1000)
                         logger.info("Servo command successful", 
                                   angle=angle, 
-                                  response_time_ms=response_time)
-                        return True, None, response_time
+                                  response_time_ms=response_time_ms)
+                        return True, None, response_time_ms
                     elif response.startswith("ERROR:"):
                         error_msg = response.replace("ERROR:", "").strip()
                         logger.error("Servo command failed", angle=angle, error=error_msg)
@@ -188,14 +180,13 @@ class ServoController:
                 
                 time.sleep(0.01)
             
-            # Timeout
-            response_time = int((time.time() - start_time) * 1000)
-            error_msg = "Timeout waiting for servo response"
+            # Timeout — response_time_ms is guaranteed defined below
+            response_time_ms = int((time.time() - start_time) * 1000)
             logger.error("Servo command timeout", 
                         angle=angle, 
-                        timeout=settings.servo_move_timeout,
-                        response_time_ms=response_time)
-            return False, error_msg, response_time
+                        timeout_seconds=settings.servo_move_timeout,
+                        response_time_ms=response_time_ms)
+            return False, "Timeout waiting for servo response", response_time_ms
             
         except serial.SerialException as e:
             error_msg = f"Serial communication error: {str(e)}"
@@ -250,11 +241,11 @@ class ServoController:
                     
                     if response.startswith("OK:"):
                         self.last_command_time = datetime.now()
-                        response_time = int((time.time() - start_time) * 1000)
+                        response_time_ms = int((time.time() - start_time) * 1000)
                         logger.info("Vertical servo command successful", 
                                   angle=angle, 
-                                  response_time_ms=response_time)
-                        return True, None, response_time
+                                  response_time_ms=response_time_ms)
+                        return True, None, response_time_ms
                     elif response.startswith("ERROR:"):
                         error_msg = response.replace("ERROR:", "").strip()
                         logger.error("Vertical servo command failed", angle=angle, error=error_msg)
@@ -263,13 +254,12 @@ class ServoController:
                 time.sleep(0.01)
             
             # Timeout
-            response_time = int((time.time() - start_time) * 1000)
-            error_msg = "Timeout waiting for vertical servo response"
+            response_time_ms = int((time.time() - start_time) * 1000)
             logger.error("Vertical servo command timeout", 
                         angle=angle, 
-                        timeout=settings.servo_move_timeout,
-                        response_time_ms=response_time)
-            return False, error_msg, response_time
+                        timeout_seconds=settings.servo_move_timeout,
+                        response_time_ms=response_time_ms)
+            return False, "Timeout waiting for vertical servo response", response_time_ms
             
         except serial.SerialException as e:
             error_msg = f"Serial communication error: {str(e)}"
@@ -316,11 +306,11 @@ class ServoController:
                     
                     if response.startswith("OK:"):
                         self.last_command_time = datetime.now()
-                        response_time = int((time.time() - start_time) * 1000)
+                        response_time_ms = int((time.time() - start_time) * 1000)
                         logger.info("Horizontal servo command successful", 
                                   angle=angle, 
-                                  response_time_ms=response_time)
-                        return True, None, response_time
+                                  response_time_ms=response_time_ms)
+                        return True, None, response_time_ms
                     elif response.startswith("ERROR:"):
                         error_msg = response.replace("ERROR:", "").strip()
                         logger.error("Horizontal servo command failed", angle=angle, error=error_msg)
@@ -329,13 +319,12 @@ class ServoController:
                 time.sleep(0.01)
             
             # Timeout
-            response_time = int((time.time() - start_time) * 1000)
-            error_msg = "Timeout waiting for horizontal servo response"
+            response_time_ms = int((time.time() - start_time) * 1000)
             logger.error("Horizontal servo command timeout", 
                         angle=angle, 
-                        timeout=settings.servo_move_timeout,
-                        response_time_ms=response_time)
-            return False, error_msg, response_time
+                        timeout_seconds=settings.servo_move_timeout,
+                        response_time_ms=response_time_ms)
+            return False, "Timeout waiting for horizontal servo response", response_time_ms
             
         except serial.SerialException as e:
             error_msg = f"Serial communication error: {str(e)}"
@@ -395,12 +384,12 @@ class ServoController:
                     
                     if response.startswith("OK:"):
                         self.last_command_time = datetime.now()
-                        response_time = int((time.time() - start_time) * 1000)
+                        response_time_ms = int((time.time() - start_time) * 1000)
                         logger.info("Material command successful", 
                                   material=material, 
                                   positions=positions,
-                                  response_time_ms=response_time)
-                        return True, None, response_time, positions
+                                  response_time_ms=response_time_ms)
+                        return True, None, response_time_ms, positions
                     elif response.startswith("ERROR:"):
                         error_msg = response.replace("ERROR:", "").strip()
                         logger.error("Material command failed", material=material, error=error_msg)
@@ -409,13 +398,12 @@ class ServoController:
                 time.sleep(0.01)
             
             # Timeout
-            response_time = int((time.time() - start_time) * 1000)
-            error_msg = "Timeout waiting for material sequence completion"
+            response_time_ms = int((time.time() - start_time) * 1000)
             logger.error("Material command timeout", 
                         material=material, 
-                        timeout=extended_timeout,
-                        response_time_ms=response_time)
-            return False, error_msg, response_time, None
+                        timeout_seconds=extended_timeout,
+                        response_time_ms=response_time_ms)
+            return False, "Timeout waiting for material sequence completion", response_time_ms, None
             
         except serial.SerialException as e:
             error_msg = f"Serial communication error: {str(e)}"
@@ -457,9 +445,9 @@ class ServoController:
                     
                     if response.startswith("OK:"):
                         self.last_command_time = datetime.now()
-                        response_time = int((time.time() - start_time) * 1000)
-                        logger.info("Base command successful", response_time_ms=response_time)
-                        return True, None, response_time
+                        response_time_ms = int((time.time() - start_time) * 1000)
+                        logger.info("Base command successful", response_time_ms=response_time_ms)
+                        return True, None, response_time_ms
                     elif response.startswith("ERROR:"):
                         error_msg = response.replace("ERROR:", "").strip()
                         logger.error("Base command failed", error=error_msg)
@@ -468,12 +456,11 @@ class ServoController:
                 time.sleep(0.01)
             
             # Timeout
-            response_time = int((time.time() - start_time) * 1000)
-            error_msg = "Timeout waiting for base command response"
+            response_time_ms = int((time.time() - start_time) * 1000)
             logger.error("Base command timeout", 
-                        timeout=settings.servo_move_timeout,
-                        response_time_ms=response_time)
-            return False, error_msg, response_time
+                        timeout_seconds=settings.servo_move_timeout,
+                        response_time_ms=response_time_ms)
+            return False, "Timeout waiting for base command response", response_time_ms
             
         except serial.SerialException as e:
             error_msg = f"Serial communication error: {str(e)}"

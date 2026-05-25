@@ -29,7 +29,7 @@ class Settings(BaseSettings):
     
     # Servo postavke
     servo_orientation: str = "horizontal"  # vertical or horizontal
-    servo_move_timeout: float = 2.0  # sekunde
+    servo_move_timeout: float = 12.0  # sekunde (bilo 2.0 — dodato za materijal sekvence; dužina sekvence je ~7.5s)
     
     # Health check postavke
     health_check_interval: float = 30.0  # sekunde

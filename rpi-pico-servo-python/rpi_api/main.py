@@ -63,19 +63,19 @@ async def lifespan(app: FastAPI):
     logger.info("Starting RPi Pico Servo Control API")
 
     try:
-        # Reset Pico da oistimo bafer
-        logger.info("Resetting Pico to clear buffer...")
-        servo_controller.disconnect()  # Prekini konekciju ako postoji
-        time.sleep(1)  # Pauza za reset
+        # Reopen serial link without commanding any motor movement.
+        logger.info("Preparing Pico serial connection without motor movement...")
+        servo_controller.disconnect()
+        time.sleep(1)
         
         # Inicijalizacija baze
         init_db()
         logger.info("Database initialized")
 
-        # Test konekcije sa Pico-om (automatski cisti bafer)
+        # Test konekcije sa Pico-om bez pomeranja servoa.
         connected, _, attempts = servo_controller.get_status()
         if connected:
-            logger.info("Successfully connected to Pico, buffer cleared")
+            logger.info("Successfully connected to Pico without motor movement")
         else:
             logger.warning("Failed to connect to Pico", attempts=attempts)
 

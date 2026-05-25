@@ -161,9 +161,11 @@ class PicoServoController:
         buf = ""
         while True:
             try:
-                if self.poller.poll(0):
-                    char = sys.stdin.read(1)
-                    if char in ('\n', '\r'):
+                # Batch-read all bytes currently available from CDC in one call
+                n = sys.stdin.any()          # reads USB ring-buffer head, no blocking
+                if n > 0:
+                    buf += sys.stdin.read(n) # one syscall per batch, not per byte
+                    if buf.endswith(('\n', '\r')):
                         cmd = buf.strip()
                         buf = ""
                         if cmd:
@@ -177,8 +179,6 @@ class PicoServoController:
                                 self.send_response(exec_success, exec_result)
                             else:
                                 self.send_response(False, result)
-                    else:
-                        buf += char
                 time.sleep(0.001)
             except Exception as e:
                 self.send_response(False, "System error: " + str(e))
